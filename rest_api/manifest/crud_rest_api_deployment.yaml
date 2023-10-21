@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crud-rest-api-deployment
+  labels:
+    app: crud-rest-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: crud-rest-api
+  template:
+    metadata:
+      labels:
+        app: crud-rest-api
+    spec:
+      containers:
+        - name: crud-rest-api
+          image: juanpabloinformatica/crud_rest_api:dev
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000
+          envFrom:
+            - configMapRef:
+                name: mysql-configmap
+            - secretRef:
+                name: mysql-secret
