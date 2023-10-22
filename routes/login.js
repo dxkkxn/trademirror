@@ -1,6 +1,5 @@
-const {createClient} = require("redis")
 require("dotenv").config() // access env variables
-
+const {createClient} = require("redis")
 const redisClient = createClient({ // config client
   url: process.env.REDIS_URL,
   socket: {
@@ -12,6 +11,3 @@ const redisClient = createClient({ // config client
   // connect to server
   await redisClient.connect()
 })()
-
-(async(user, mdp)=> {
-
