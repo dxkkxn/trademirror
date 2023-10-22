@@ -1,0 +1,7 @@
+{
+  "name": "authentication",
+  "version": "1.0",
+  "scripts": {
+    "test": "mocha ./**/*.test.js"
+  }
+}
