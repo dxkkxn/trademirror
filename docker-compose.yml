@@ -1,0 +1,57 @@
+version: "3"
+services:
+  restapi:
+    image: ${RESTAPI_IMAGE}
+    container_name: ${RESTAPI_CONTAINER}
+    build:
+      context: ${PWD}
+      dockerfile: ./rest_aspi/Dockerfile
+    env_file:
+      - ./rest_api/.env
+    depends_on:
+      - redis
+    ports:
+      - 8000:8000
+    networks:
+      - trade-mirror-network
+  frontend:
+    image: ${FRONTEND_IMAGE}
+    container_name: ${FRONTEND_CONTAINER}
+    build:
+      context: ${PWD}
+      dockerfile: ./front_end/Dockerfile
+    env_file:
+      - ./front_end/.env
+    depends_on:
+      - restapi
+    ports:
+      - 4500:4500
+    networks:
+      - trade-mirror-network
+  auth:
+    image: ${AUTH_IMAGE}
+    container_name: ${AUTH_CONTAINER}
+    build:
+      context: ${PWD}
+      dockerfile: ./auth/Dockerfile
+    env_file:
+      - ./auth/.env
+    depends_on:
+      - redis
+    networks:
+      - trade-mirror-network
+  redis:
+    image: ${REDIS_IMAGE}
+    container_name: ${REDIS_CONTAINER}
+    build:
+      context: ${PWD}
+      dockerfile: ./redis/Dockerfile
+    env_file:
+      - ./redis/.env
+    ports:
+      - 6379:6379
+    networks:
+      - trade-mirror-network
+networks:
+  trade-mirror-network:
+    driver: bridge
