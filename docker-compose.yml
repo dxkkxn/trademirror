@@ -1,17 +1,30 @@
 version: "3"
 services:
+  redis:
+    image: ${REDIS_IMAGE}
+    # image: ${REDIS_IMAGE}
+    container_name: ${REDIS_CONTAINER}
+    build:
+      context: ${PWD}
+      dockerfile: ./redis/Dockerfile
+    env_file:
+      - ./redis/.env.test
+    ports:
+      - ${REDIS_PORT}:6379
+    networks:
+      - trade-mirror-network
   restapi:
     image: ${RESTAPI_IMAGE}
     container_name: ${RESTAPI_CONTAINER}
     build:
       context: ${PWD}
-      dockerfile: ./rest_aspi/Dockerfile
+      dockerfile: ./rest_api/Dockerfile
     env_file:
-      - ./rest_api/.env
+      - ./rest_api/.env.test
     depends_on:
       - redis
     ports:
-      - 8000:8000
+      - ${REST_API_PORT}:8000
     networks:
       - trade-mirror-network
   frontend:
@@ -21,37 +34,37 @@ services:
       context: ${PWD}
       dockerfile: ./front_end/Dockerfile
     env_file:
-      - ./front_end/.env
+      - ./front_end/.env.test
+    # environment:
+      # - BACKEND_URL="http://restapi:8000"
     depends_on:
       - restapi
     ports:
-      - 4500:4500
+      - ${FRONTEND_PORT}:4500
     networks:
       - trade-mirror-network
-  auth:
-    image: ${AUTH_IMAGE}
-    container_name: ${AUTH_CONTAINER}
+  nginx:
     build:
       context: ${PWD}
-      dockerfile: ./auth/Dockerfile
-    env_file:
-      - ./auth/.env
+      dockerfile: ./nginx/Dockerfile
     depends_on:
-      - redis
-    networks:
-      - trade-mirror-network
-  redis:
-    image: ${REDIS_IMAGE}
-    container_name: ${REDIS_CONTAINER}
-    build:
-      context: ${PWD}
-      dockerfile: ./redis/Dockerfile
-    env_file:
-      - ./redis/.env
+      - restapi
+      - frontend
+    restart: always
     ports:
-      - 6379:6379
-    networks:
-      - trade-mirror-network
+      - ${NGINX_PORT}:80
+  # auth:
+  #   image: ${AUTH_IMAGE}
+  #   container_name: ${AUTH_CONTAINER}
+  #   build:
+  #     context: ${PWD}
+  #     dockerfile: ./auth/Dockerfile
+  #   env_file:
+  #     - ./auth/.env
+  #   depends_on:
+  #     - redis
+  #   networks:
+  #     - trade-mirror-network
 networks:
   trade-mirror-network:
     driver: bridge

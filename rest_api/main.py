@@ -18,7 +18,11 @@ app.add_middleware(
 
 # Initialize a Redis connection
 redis_host = config("REDIS_HOST")
-redis_client = redis.Redis(host=redis_host, port=5555, db=0)
+redis_port = config("REDIS_PORT")
+redis_database = config("REDIS_DATABASE")
+# redis_client = redis.Redis(host=redis_host, port=5555, db=0)
+redis_client = redis.Redis(host=redis_host, port=redis_port or 6379, db= redis_database or 0 )
+
 
 @app.get("/")
 async def get_redis_keys():
@@ -34,4 +38,3 @@ async def get_redis_keys():
         return {"keys": keys_json}
     except Exception as e:
         return {"error": str(e)}
-
