@@ -46,7 +46,7 @@ This command gracefully stops the containers without removing them.
 
 ### 4. Access the Backend Container's Shell
 
-To stop the running Docker containers, use this command:
+To access a shell inside the backend container, use this command:
 
 ```shell
 make bash-backend
