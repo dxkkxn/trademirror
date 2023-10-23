@@ -6,22 +6,27 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-allowed_origins = ["*"]
-app.add_middleware(
-    CORSMiddleware,
-    allowed_origins=allowed_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# allowed_origins = ["*"]
+# app.add_middleware(
+#     CORSMiddleware,
+#     allowed_origins=allowed_origins,
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
 
 
 # Initialize a Redis connection
 redis_host = config("REDIS_HOST")
-redis_client = redis.Redis(host=redis_host, port=5555, db=0)
+redis_port = config("REDIS_PORT")
+redis_database = config("REDIS_DATABASE")
+# redis_client = redis.Redis(host=redis_host, port=5555, db=0)
+redis_client = redis.Redis(host=redis_host, port=redis_port or 6379, db= redis_database or 0 )
+
 
 @app.get("/")
 async def get_redis_keys():
+    print("hola")
     try:
         # Retrieve all keys from the Redis database
         keys = redis_client.keys("*")
@@ -34,4 +39,3 @@ async def get_redis_keys():
         return {"keys": keys_json}
     except Exception as e:
         return {"error": str(e)}
-

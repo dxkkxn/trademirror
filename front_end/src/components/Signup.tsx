@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { Button, FormGroup, InputGroup, Card, Classes, Callout } from '@blueprintjs/core';
 import axios from 'axios'
 
+let BACKEND_URL = import.meta.env.VITE_BACKEND_URL
+console.log(BACKEND_URL)
+
 const Signup: React.FC = () => {
   const [username, setUsername] = useState<string>('');
   const [email, setEmail] = useState<string>('');
@@ -15,7 +18,7 @@ const Signup: React.FC = () => {
     else {
       setError("")
       try {
-        const response = await axios.post('/backend/api/user', { username, email, password });
+        const response = await axios.get(BACKEND_URL+"/");
         console.log("hola")
         console.log("Signup successful", response.data);
       } catch (error) {
