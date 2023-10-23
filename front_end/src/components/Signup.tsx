@@ -18,7 +18,7 @@ const Signup: React.FC = () => {
     else {
       setError("")
       try {
-        const response = await axios.get(BACKEND_URL);
+        const response = await axios.get(BACKEND_URL+"/");
         console.log("hola")
         console.log("Signup successful", response.data);
       } catch (error) {

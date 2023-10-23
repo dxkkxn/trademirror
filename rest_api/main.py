@@ -6,14 +6,14 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-allowed_origins = ["*"]
-app.add_middleware(
-    CORSMiddleware,
-    allowed_origins=allowed_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# allowed_origins = ["*"]
+# app.add_middleware(
+#     CORSMiddleware,
+#     allowed_origins=allowed_origins,
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
 
 
 # Initialize a Redis connection
@@ -26,6 +26,7 @@ redis_client = redis.Redis(host=redis_host, port=redis_port or 6379, db= redis_d
 
 @app.get("/")
 async def get_redis_keys():
+    print("hola")
     try:
         # Retrieve all keys from the Redis database
         keys = redis_client.keys("*")
