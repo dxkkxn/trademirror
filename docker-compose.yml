@@ -7,6 +7,16 @@ services:
       - ${REDIS_PORT}:6379
     networks:
       - trade-mirror-network
+  rediscommander:
+    image: rediscommander/redis-commander:latest
+    container_name: ${REDIS_COMMANDER_CONTAINER}
+    restart: always
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - ${REDIS_COMMANDER_PORT}:8081
+    networks:
+      - trade-mirror-network
   restapi:
     image: ${RESTAPI_IMAGE}
     container_name: ${RESTAPI_CONTAINER}
@@ -58,19 +68,6 @@ services:
   #     - ./auth/.env
   #   depends_on:
   #     - redis
-  #   networks:
-  #     - trade-mirror-network
-  # redis:
-  #   image: redis
-  #   # image: ${REDIS_IMAGE}
-  #   container_name: ${REDIS_CONTAINER}
-  #   # build:
-  #   #   context: ${PWD}
-  #   #   dockerfile: ./redis/Dockerfile
-  #   # env_file:
-  #   #   - ./redis/.env.test
-  #   ports:
-  #     - ${REDIS_PORT}:6379
   #   networks:
   #     - trade-mirror-network
 networks:

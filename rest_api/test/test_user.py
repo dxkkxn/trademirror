@@ -71,9 +71,7 @@ async def test_update_user(test_client):
     }
 
     # Send a PUT request to update the user
-    response = await test_client.put(
-        f"/user/{created_user.id}", json=updated_user_data
-    )
+    response = await test_client.put(f"/user/{created_user.id}", json=updated_user_data)
 
     # Check the response
     assert response.status_code == 200
