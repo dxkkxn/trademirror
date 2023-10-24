@@ -5,6 +5,7 @@ ENV= .env.test
 DOCKER = docker
 # arch-linux based check if u have docker-compose
 DOCKER_COMPOSE=docker-compose
+FIREFOX=firefox
 # other os check if u have docker compose
 # uncomment if u have 
 #DOCKER_COMPOSE=docker compose
@@ -23,5 +24,18 @@ bash-backend:
 clean:
 	$(DOCKER_COMPOSE) --env-file $(ENV) down
 	$(DOCKER) rmi $(RESTAPI_IMAGE) $(FRONTEND_IMAGE) $(REDIS_IMAGE) -f 
+mockdata:
+	$(DOCKER) exec $(RESTAPI_CONTAINER) python3 /app/helper/mockdata.py 
+remove-database:
+	$(DOCKER) exec -it $(REDIS_CONTAINER) redis-cli FLUSHDB 
+remove-all:
+	$(DOCKER) exec -it $(REDIS_CONTAINER) redis-cli FLUSHALL
+
+# Use this command only if have firefox installed
+see-database:
+	$(FIREFOX) http://localhost:8081/ &
+	
+
+
 
 
