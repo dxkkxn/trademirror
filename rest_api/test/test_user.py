@@ -16,9 +16,9 @@ def test_client():
 @pytest.mark.asyncio
 async def test_create_user(test_client):
     # Define test user data
-    test_user = User(id=1, username="testuser", password="testpassword")
+    test_user = User(id=0, username="testuser", password="testpassword")
     # Send a POST request to create the user
-    response = await test_client.post("/users/", json=test_user.dict())
+    response = await test_client.post("/user/", json=test_user.dict())
     # Check the response
     assert response.status_code == 200
     user = User(**response.json())
@@ -28,7 +28,7 @@ async def test_create_user(test_client):
 @pytest.mark.asyncio
 async def test_read_users(test_client):
     # Send a GET request to retrieve all users
-    response = await test_client.get("/users/")
+    response = await test_client.get("/user/")
 
     # Check the response
     assert response.status_code == 200
@@ -42,11 +42,11 @@ async def test_read_user(test_client):
     test_user = User(id=1, username="testuser", password="testpassword")
 
     # Create the test user by sending a POST request
-    response = await test_client.post("/users/", json=test_user.dict())
+    response = await test_client.post("/user/", json=test_user.dict())
     created_user = User(**response.json())
 
     # Send a GET request to retrieve the created user
-    response = await test_client.get(f"/users/{created_user.id}")
+    response = await test_client.get(f"/user/{created_user.id}")
 
     # Check the response
     assert response.status_code == 200
@@ -57,18 +57,22 @@ async def test_read_user(test_client):
 @pytest.mark.asyncio
 async def test_update_user(test_client):
     # Define test user data
-    test_user = User(id=1, username="testuser", password="testpassword")
+    test_user = User(id=2, username="testuser", password="testpassword")
 
     # Create the test user by sending a POST request
-    response = await test_client.post("/users/", json=test_user.dict())
+    response = await test_client.post("/user/", json=test_user.dict())
+    print(response)
     created_user = User(**response.json())
 
     # Define updated user data
-    updated_user_data = {"username": "updateduser", "password": "updatedpassword"}
+    updated_user_data = {
+        "username": "updateduser",
+        "password": "updatedpassword",
+    }
 
     # Send a PUT request to update the user
     response = await test_client.put(
-        f"/users/{created_user.id}", json=updated_user_data
+        f"/user/{created_user.id}", json=updated_user_data
     )
 
     # Check the response
@@ -81,18 +85,19 @@ async def test_update_user(test_client):
 @pytest.mark.asyncio
 async def test_delete_user(test_client):
     # Define test user data
-    test_user = User(id=1, username="testuser", password="testpassword")
+    test_user = User(id=3, username="testuser", password="testpassword")
 
     # Create the test user by sending a POST request
-    response = await test_client.post("/users/", json=test_user.dict())
+    response = await test_client.post("/user/", json=test_user.dict())
     created_user = User(**response.json())
 
     # Send a DELETE request to delete the user
-    response = await test_client.delete(f"/users/{created_user.id}")
+    response = await test_client.delete(f"/user/{created_user.id}")
+    print(response)
 
     # Check the response
     assert response.status_code == 200
 
     # Verify that the user has been deleted by sending a GET request
-    response = await test_client.get(f"/users/{created_user.id}")
+    response = await test_client.get(f"/user/{created_user.id}")
     assert response.status_code == 404

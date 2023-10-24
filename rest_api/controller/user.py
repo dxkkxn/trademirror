@@ -10,7 +10,7 @@ router = APIRouter()
 
 # In-memory database to store user data
 fake_users_db = []
-user_id_counter = 1
+# user_id_counter = 0
 
 
 # Create a new user
@@ -28,11 +28,11 @@ def create_user(user: User):
     Raises:
         HTTPException: If the user cannot be created.
     """
-    global user_id_counter
+    # global user_id_counter
 
-    new_user = User(id=user_id_counter, username=user.username, password=user.password)
+    new_user = User(id=user.id, username=user.username, password=user.password)
     fake_users_db.append(new_user)
-    user_id_counter += 1
+    # user_id_counter += 1
 
     return new_user
 
@@ -72,7 +72,7 @@ def read_user(user_id: int):
 
 # Update a user
 @router.put("/{user_id}", response_model=User)
-def update_user(user_id: int, user_update: User):
+def update_user(user_id: int, user_update: dict):
     """
     Update a user's information.
 
@@ -90,7 +90,7 @@ def update_user(user_id: int, user_update: User):
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
 
-    for key, value in user_update.dict(exclude_unset=True).items():
+    for key, value in user_update.items():
         setattr(user, key, value)
 
     return user
@@ -111,10 +111,12 @@ def delete_user(user_id: int):
     Raises:
         HTTPException: If the user is not found.
     """
+    # global user_id_counter
     user = find_user_by_id(user_id)
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
 
+    # user_id_counter -= 1
     fake_users_db.remove(user)
     return user
 
