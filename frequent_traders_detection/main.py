@@ -5,6 +5,7 @@ import websockets
 import json
 import time
 from collections import defaultdict
+from kafka import KafkaProducer
 
 
 class TradersDetector:
@@ -16,6 +17,8 @@ class TradersDetector:
         # to time the wallet was involved in a trade
         self.last_trade = {}  # dict mapping each wallet to the last traded time
         self.frequent_traders = set()
+
+        self.producer = KafkaProducer(bootstrap_servers='localhost:9092')
 
     async def data_structures_processing(self):
         """
@@ -42,6 +45,10 @@ class TradersDetector:
         print(
             f"size of frequent traders= {len(self.frequent_traders)}, ft ={self.frequent_traders}"
         )
+
+        for addr in self.frequent_traders:
+            self.producer.send('frequent-traders',
+                               bytes(addr, encoding='utf-8'))
         return
 
     async def main(self):
@@ -63,11 +70,11 @@ class TradersDetector:
                     out_addr = out["addr"]
                     self.possible_traders[out["addr"]] += 1
                     self.last_trade[out_addr] = time.time()
-                if time.time() - last_time >= time_limit/2:
+                # if time.time() - last_time >= time_limit/2:
                     # if time_limit / 2 seconds passed schedule task to
                     # process data
-                    asyncio.create_task(self.data_structures_processing())
-                    last_time = time.time()
+                asyncio.create_task(self.data_structures_processing())
+                last_time = time.time()
 
 
 
