@@ -9,16 +9,17 @@ from kafka import KafkaProducer
 
 
 class TradersDetector:
-
     def __init__(self, time_limit, tptl):
         self.time_limit = time_limit  # time limit in seconds
         self.tptl = tptl  # Trasaction Per Time Limit
         self.possible_traders = defaultdict(lambda: 0)  # dict mapping wallets
         # to time the wallet was involved in a trade
         self.last_trade = {}  # dict mapping each wallet to the last traded time
-        self.frequent_traders = set()
+        self.sent_traders = set()  # wallets that have been already sent to DB
+        self.frequent_traders = set()  # mapping wallet of frequent traders to
+        # sent or not sent (kafka)
 
-        self.producer = KafkaProducer(bootstrap_servers='localhost:9092')
+        self.producer = KafkaProducer(bootstrap_servers="localhost:9092")
 
     async def data_structures_processing(self):
         """
@@ -35,6 +36,7 @@ class TradersDetector:
                 # time_limit not reached and more than
                 # transaction_per_time_limit trades
                 self.frequent_traders.add(addr)
+                self.possible_traders.pop(addr)
             # if tl not reached and less than trades than transactions
             # per time limit do nothing
         # remove addreses:
@@ -47,8 +49,12 @@ class TradersDetector:
         )
 
         for addr in self.frequent_traders:
-            self.producer.send('frequent-traders',
-                               bytes(addr, encoding='utf-8'))
+            print(f"addr: {addr}")
+            # send to kafka wallet address
+            self.producer.send("frequent-traders", bytes(addr, encoding="utf-8"))
+        self.sent_traders |= self.frequent_traders
+        print(f"sent_traders{self.sent_traders}")
+        self.frequent_traders = set()
         return
 
     async def main(self):
@@ -64,18 +70,22 @@ class TradersDetector:
                 dictm = json.loads(message)
                 for input_ in dictm["x"]["inputs"]:
                     input_addr = input_["prev_out"]["addr"]
+                    if input_addr in self.sent_traders:
+                        continue
                     self.possible_traders[input_addr] += 1
                     self.last_trade[input_addr] = time.time()
                 for out in dictm["x"]["out"]:
                     out_addr = out["addr"]
-                    self.possible_traders[out["addr"]] += 1
+                    if out_addr in self.sent_traders:
+                        continue
+                    self.possible_traders[out_addr] += 1
                     self.last_trade[out_addr] = time.time()
-                # if time.time() - last_time >= time_limit/2:
+                if time.time() - last_time >= time_limit / 2:
                     # if time_limit / 2 seconds passed schedule task to
                     # process data
-                asyncio.create_task(self.data_structures_processing())
-                last_time = time.time()
-
+                    self.data_structures_processing()
+                    # asyncio.create_task()
+                    last_time = time.time()
 
 
 if __name__ == "__main__":
