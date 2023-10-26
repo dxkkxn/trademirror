@@ -5,58 +5,92 @@ import websockets
 import json
 import time
 from collections import defaultdict
-
-time_limit = 10 * 60; # 10 min
-trades_per_tl = 3; # trades per time limit
-
-async def main():
-    async with websockets.connect("wss://ws.blockchain.info/inv") as client:
-        print("[main] Connected to wss://ws.blockchain.info/inv" )
-
-        cmd = '{"op":"unconfirmed_sub"}'
-        await client.send(cmd)
-
-        possible_traders = defaultdict(lambda: 0)  # dict mapping wallets to time the
-                                           # wallet was involved in a trade
-        last_trade = {}  # dict mapping each wallet to the last traded time
-        frequent_traders = set()
-        while True:
-            message = await client.recv()
-            dictm = json.loads(message)
-            # print('[main] Recv:', message)
-            print('input')
-            for input_ in dictm['x']['inputs']:
-                print(input_)
-                input_addr = input_['prev_out']['addr']
-                print(input_addr)
-                possible_traders[input_addr] += 1
-                last_trade[input_addr] = time.time()
-            print('out')
-            for out in dictm['x']['out']:
-                out_addr = out['addr']
-                print(out_addr)
-                possible_traders[out['addr']] += 1
-                last_trade[out_addr] = time.time()
-
-            current_time = time.time()
-            addr_to_remove = []
-            for addr, last_time in last_trade.items():
-                if current_time - last_time > time_limit:
-                    addr_to_remove.append(addr)
-                elif possible_traders[addr] > trades_per_tl:
-                    # time_limit not reached and more than trades_per_tl trades
-                    frequent_traders.add(addr)
-                # if tl not reached and less than trades than trades_per_tl do nothing
-            # remove addreses:
-            for addr in addr_to_remove:
-                last_trade.pop(addr)
-                possible_traders.pop(addr)
-
-            print(f'size of frequent traders= {len(frequent_traders)}, ft ={frequent_traders}')
+from kafka import KafkaProducer
 
 
+class TradersDetector:
+    def __init__(self, time_limit, tptl):
+        self.time_limit = time_limit  # time limit in seconds
+        self.tptl = tptl  # Trasaction Per Time Limit
+        self.possible_traders = defaultdict(lambda: 0)  # dict mapping wallets
+        # to time the wallet was involved in a trade
+        self.last_trade = {}  # dict mapping each wallet to the last traded time
+        self.sent_traders = set()  # wallets that have been already sent to DB
+        self.frequent_traders = set()  # mapping wallet of frequent traders to
+        # sent or not sent (kafka)
+
+        self.producer = KafkaProducer(bootstrap_servers="localhost:9092")
+
+    async def data_structures_processing(self):
+        """
+        Checks if a frequent trader is detected by iterating through
+        possible_traders and last_traders. And if a frequent trader is detected
+        add it to member variable frequent_traders
+        """
+        current_time = time.time()
+        addr_to_remove = []
+        for addr, last_time in self.last_trade.items():
+            if current_time - last_time > self.time_limit:
+                addr_to_remove.append(addr)
+            elif self.possible_traders[addr] > self.tptl:
+                # time_limit not reached and more than
+                # transaction_per_time_limit trades
+                self.frequent_traders.add(addr)
+                self.possible_traders.pop(addr)
+            # if tl not reached and less than trades than transactions
+            # per time limit do nothing
+        # remove addreses:
+        for addr in addr_to_remove:
+            self.last_trade.pop(addr)
+            self.possible_traders.pop(addr)
+
+        print(
+            f"size of frequent traders= {len(self.frequent_traders)}, ft ={self.frequent_traders}"
+        )
+
+        for addr in self.frequent_traders:
+            print(f"addr: {addr}")
+            # send to kafka wallet address
+            self.producer.send("frequent-traders", bytes(addr, encoding="utf-8"))
+        self.sent_traders |= self.frequent_traders
+        print(f"sent_traders{self.sent_traders}")
+        self.frequent_traders = set()
+        return
+
+    async def main(self):
+        async with websockets.connect("wss://ws.blockchain.info/inv") as client:
+            print("[main] Connected to wss://ws.blockchain.info/inv")
+
+            cmd = '{"op":"unconfirmed_sub"}'
+            await client.send(cmd)
+
+            last_time = time.time()
+            while True:
+                message = await client.recv()
+                dictm = json.loads(message)
+                for input_ in dictm["x"]["inputs"]:
+                    input_addr = input_["prev_out"]["addr"]
+                    if input_addr in self.sent_traders:
+                        continue
+                    self.possible_traders[input_addr] += 1
+                    self.last_trade[input_addr] = time.time()
+                for out in dictm["x"]["out"]:
+                    out_addr = out["addr"]
+                    if out_addr in self.sent_traders:
+                        continue
+                    self.possible_traders[out_addr] += 1
+                    self.last_trade[out_addr] = time.time()
+                if time.time() - last_time >= time_limit / 2:
+                    # if time_limit / 2 seconds passed schedule task to
+                    # process data
+                    self.data_structures_processing()
+                    # asyncio.create_task()
+                    last_time = time.time()
 
 
 if __name__ == "__main__":
+    time_limit = 60
+    tptl = 3  # transaction per time limit
+    app = TradersDetector(time_limit, tptl)
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
+    loop.run_until_complete(app.main())
