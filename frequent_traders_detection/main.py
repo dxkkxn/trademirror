@@ -12,12 +12,12 @@ class TradersDetector:
     def __init__(self, time_limit, tptl):
         self.time_limit = time_limit  # time limit in seconds
         self.tptl = tptl  # Trasaction Per Time Limit
-        self.possible_traders = defaultdict(lambda: 0)  # dict mapping wallets to time the
-        # wallet was involved in a trade
+        self.possible_traders = defaultdict(lambda: 0)  # dict mapping wallets
+        # to time the wallet was involved in a trade
         self.last_trade = {}  # dict mapping each wallet to the last traded time
         self.frequent_traders = set()
 
-    def data_structures_processing(self):
+    async def data_structures_processing(self):
         """
         Checks if a frequent trader is detected by iterating through
         possible_traders and last_traders. And if a frequent trader is detected
@@ -42,7 +42,7 @@ class TradersDetector:
         print(
             f"size of frequent traders= {len(self.frequent_traders)}, ft ={self.frequent_traders}"
         )
-        return;
+        return
 
     async def main(self):
         async with websockets.connect("wss://ws.blockchain.info/inv") as client:
@@ -51,6 +51,7 @@ class TradersDetector:
             cmd = '{"op":"unconfirmed_sub"}'
             await client.send(cmd)
 
+            last_time = time.time()
             while True:
                 message = await client.recv()
                 dictm = json.loads(message)
@@ -62,11 +63,17 @@ class TradersDetector:
                     out_addr = out["addr"]
                     self.possible_traders[out["addr"]] += 1
                     self.last_trade[out_addr] = time.time()
-                self.data_structures_processing()
+                if time.time() - last_time >= time_limit/2:
+                    # if time_limit / 2 seconds passed schedule task to
+                    # process data
+                    asyncio.create_task(self.data_structures_processing())
+                    last_time = time.time()
 
 
 
 if __name__ == "__main__":
-    app = TradersDetector(60, 3)
+    time_limit = 60
+    tptl = 3  # transaction per time limit
+    app = TradersDetector(time_limit, tptl)
     loop = asyncio.get_event_loop()
     loop.run_until_complete(app.main())
