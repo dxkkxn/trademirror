@@ -1,14 +1,14 @@
 version: "3"
 services:
   redis:
-    image: redis
+    image: ${REDIS_IMAGE}
     container_name: ${REDIS_CONTAINER}
     ports:
       - ${REDIS_PORT}:6379
     networks:
       - trade-mirror-network
   rediscommander:
-    image: rediscommander/redis-commander:latest
+    image: ${REDIS_COMMANDER_IMAGE}
     container_name: ${REDIS_COMMANDER_CONTAINER}
     restart: always
     environment:
