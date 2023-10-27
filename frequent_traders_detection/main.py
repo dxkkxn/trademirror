@@ -21,7 +21,7 @@ class TradersDetector:
 
         self.producer = KafkaProducer(bootstrap_servers="localhost:9092")
 
-    async def data_structures_processing(self):
+    def data_structures_processing(self):
         """
         Checks if a frequent trader is detected by iterating through
         possible_traders and last_traders. And if a frequent trader is detected
