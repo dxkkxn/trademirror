@@ -36,7 +36,7 @@ class TradersDetector:
                 # time_limit not reached and more than
                 # transaction_per_time_limit trades
                 self.frequent_traders.add(addr)
-                self.possible_traders.pop(addr)
+                addr_to_remove.append(addr)
             # if tl not reached and less than trades than transactions
             # per time limit do nothing
         # remove addreses:
