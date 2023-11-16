@@ -70,12 +70,16 @@ class TradersDetector:
                 dictm = json.loads(message)
                 for input_ in dictm["x"]["inputs"]:
                     input_addr = input_["prev_out"]["addr"]
+                    if not input_addr:
+                        continue
                     if input_addr in self.sent_traders:
                         continue
                     self.possible_traders[input_addr] += 1
                     self.last_trade[input_addr] = time.time()
                 for out in dictm["x"]["out"]:
                     out_addr = out["addr"]
+                    if not out_addr:
+                        continue
                     if out_addr in self.sent_traders:
                         continue
                     self.possible_traders[out_addr] += 1
