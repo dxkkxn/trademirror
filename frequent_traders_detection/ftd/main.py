@@ -6,6 +6,7 @@ import json
 import time
 from collections import defaultdict
 from kafka import KafkaProducer
+from decouple import config
 
 
 class TradersDetector:
@@ -19,7 +20,10 @@ class TradersDetector:
         self.frequent_traders = set()  # mapping wallet of frequent traders to
         # sent or not sent (kafka)
 
-        self.producer = KafkaProducer(bootstrap_servers="localhost:9092")
+        # self.producer = KafkaProducer(bootstrap_servers="localhost:9092")
+        self.producer = KafkaProducer(
+            bootstrap_servers="{}:{}".format(config("KAFKA_HOST"), config("KAFKA_PORT"))
+        )
 
     def data_structures_processing(self):
         """

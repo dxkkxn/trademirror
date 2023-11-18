@@ -1,5 +1,6 @@
 version: "3"
 services:
+  # ------- DATABASE ----------
   redis:
     image: ${REDIS_IMAGE}
     container_name: ${REDIS_CONTAINER}
@@ -17,6 +18,8 @@ services:
       - ${REDIS_COMMANDER_PORT}:8081
     networks:
       - trade-mirror-network
+  # -------------------------------
+  # ---------BACKEND --------------
   restapi:
     image: ${RESTAPI_IMAGE}
     container_name: ${RESTAPI_CONTAINER}
@@ -31,6 +34,8 @@ services:
       - ${RESTAPI_PORT}:8000
     networks:
       - trade-mirror-network
+  # -------------------------------
+  # ---------- FRONTEND -----------
   frontend:
     image: ${FRONTEND_IMAGE}
     container_name: ${FRONTEND_CONTAINER}
@@ -45,6 +50,29 @@ services:
       - ${FRONTEND_PORT}:4500
     networks:
       - trade-mirror-network
+  #---------------------------------
+  # ------------KAFKA---------------
+  zookeper:
+    image: ${ZOOKEPER_IMAGE}
+    container_name: ${ZOOKEPER_CONTAINER}
+    ports:
+      - ${ZOOKEPER_PORT}:2181
+  kafka:
+    image: ${KAFKA_IMAGE}
+    container_name: ${KAFKA_CONTAINER}
+    build:
+      context: ${PWD}
+      dockerfile: ./kafka/Dockerfile
+    ports:
+      - ${KAFKA_PORT}:9092
+    environment:
+      TZ: UTC
+      ZOOKEPER_HOST: ${ZOOKEPER_HOST}
+      ZOOKEEPER_PORT: ${ZOOKEPER_PORT}
+    depends_on:
+      - zookeper
+    # command: bash -c "./init_kafka_topic.sh"
+
   # this should be implemented after
   # nginx:
   #   build:
