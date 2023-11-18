@@ -23,7 +23,7 @@ bash-backend:
 	$(DOCKER) exec -it $(RESTAPI_CONTAINER) /bin/bash
 clean:
 	$(DOCKER_COMPOSE) --env-file $(ENV) down
-	$(DOCKER) rmi $(RESTAPI_IMAGE) $(FRONTEND_IMAGE) $(REDIS_IMAGE) -f 
+	$(DOCKER) rmi $(RESTAPI_IMAGE) $(FRONTEND_IMAGE) $(REDIS_IMAGE)  $(CONSUMER_FTD_IMAGE) $(REDIS_COMMANDER_IMAGE) $(ZOOKEPER_IMAGE) $(KAFKA_IMAGE) $(PRODUCER_FTD_IMAGE) -f 
 mockdata:
 	$(DOCKER) exec $(RESTAPI_CONTAINER) python3 /app/helper/mockdata.py 
 remove-database:

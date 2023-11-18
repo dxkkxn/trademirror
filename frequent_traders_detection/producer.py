@@ -5,7 +5,10 @@ import websockets
 import json
 import time
 from collections import defaultdict
-from kafka import KafkaProducer
+from confluent_kafka import Producer
+
+# from kafka import KafkaProducer
+from decouple import config
 
 
 class TradersDetector:
@@ -19,7 +22,16 @@ class TradersDetector:
         self.frequent_traders = set()  # mapping wallet of frequent traders to
         # sent or not sent (kafka)
 
-        self.producer = KafkaProducer(bootstrap_servers="localhost:9092")
+        producer_conf = {
+            "bootstrap.servers": "kafka:29092",
+            "client.id": "my-producer",
+        }
+        self.producer = Producer(producer_conf)
+
+        # self.producer = KafkaProducer(bootstrap_servers="localhost:9092")
+        # self.producer = KafkaProducer(
+        #     bootstrap_servers="{}:{}".format(config("KAFKA_HOST"), config("KAFKA_PORT"))
+        # )
 
     def data_structures_processing(self):
         """
@@ -51,7 +63,10 @@ class TradersDetector:
         for addr in self.frequent_traders:
             print(f"addr: {addr}")
             # send to kafka wallet address
-            self.producer.send("frequent-traders", bytes(addr, encoding="utf-8"))
+            # self.producer.send("frequent-traders", bytes(addr, encoding="utf-8"))
+            self.producer.produce(
+                topic="frequent-traders", value=bytes(addr, encoding="utf-8")
+            )
         self.sent_traders |= self.frequent_traders
         print(f"sent_traders{self.sent_traders}")
         self.frequent_traders = set()
