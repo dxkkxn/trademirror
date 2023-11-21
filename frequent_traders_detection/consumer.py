@@ -5,7 +5,12 @@ import os
 
 # from kafka import KafkaConsumer
 
-redis_client = redis.Redis(host="redis", port=6379, db=0)
+# redis_client = redis.Redis(host="redis", port=6379, db=0)
+redis_host = os.environ.get("REDIS_HOST")
+redis_port = os.environ.get("REDIS_PORT")
+redis_client = redis.Redis(host=redis_host, port=redis_port, decode_responses=True)
+# redis_client = redis.Redis(host="redis", port=6379, db=0)
+
 # consumer = KafkaConsumer('frequent-traders')
 consumer_conf = {
     "bootstrap.servers": os.environ.get("BOOSTRAP_SERVER"),
