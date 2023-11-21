@@ -8,7 +8,8 @@ from collections import defaultdict
 from confluent_kafka import Producer
 
 # from kafka import KafkaProducer
-from decouple import config
+# from decouple import config
+import os
 
 
 class TradersDetector:
@@ -23,7 +24,7 @@ class TradersDetector:
         # sent or not sent (kafka)
 
         producer_conf = {
-            "bootstrap.servers": "kafka:29092",
+            "bootstrap.servers": os.environ.get("BOOSTRAP_SERVER"),
             "client.id": "my-producer",
         }
         self.producer = Producer(producer_conf)
