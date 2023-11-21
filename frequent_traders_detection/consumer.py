@@ -22,13 +22,9 @@ try:
         if msg is None:
             continue
         if msg.error():
-            if msg.error().code() == KafkaException._PARTITION_EOF:
-                continue
-            else:
-                print(msg.error())
-                break
+            print(f"error: {msg.error()}")
+            # break
         print("Received message: {0}".format(msg.value()))
-        # print("Received message: {0}".format(msg))
         redis_client.lpush("frequent-trading-wallets", msg.value())
 except KeyboardInterrupt:
     sys.stderr.write("aborted by user.")
