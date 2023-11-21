@@ -1,12 +1,17 @@
 import redis
 from confluent_kafka import Consumer, KafkaException
 import sys
+import os
 
 # from kafka import KafkaConsumer
 
 redis_client = redis.Redis(host="redis", port=6379, db=0)
 # consumer = KafkaConsumer('frequent-traders')
-consumer_conf = {"bootstrap.servers": "kafka:29092", "client.id": "my-consumer","group.id":"trading-group"}
+consumer_conf = {
+    "bootstrap.servers": os.environ.get("BOOSTRAP_SERVER"),
+    "client.id": "my-consumer",
+    "group.id": "trading-group",
+}
 topic = "frequent-traders"
 consumer = Consumer(consumer_conf)
 try:
