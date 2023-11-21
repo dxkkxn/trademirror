@@ -101,6 +101,8 @@ services:
     build:
       context: ${PWD}
       dockerfile: ./frequent_traders_detection/Dockerfile.producer
+    env_file:
+      - ./frequent_traders_detection/.env.test
     depends_on:
       - kafka
     networks:
@@ -111,6 +113,8 @@ services:
     build:
       context: ${PWD}
       dockerfile: ./frequent_traders_detection/Dockerfile.consumer
+    env_file:
+      - ./frequent_traders_detection/.env.test
     depends_on:
       - producer_ftd
     networks:
