@@ -21,6 +21,18 @@ class TradersDetector:
 
         self.producer = KafkaProducer(bootstrap_servers="localhost:9092")
 
+    def kafka_send_frequent_traders(self):
+        """
+        sends through kafka the frequent traders
+        """
+        for addr in self.frequent_traders:
+            print(f"addr: {addr}")
+            # send to kafka wallet address
+            self.producer.send("frequent-traders", bytes(addr, encoding="utf-8"))
+        self.sent_traders |= self.frequent_traders
+        print(f"sent_traders{self.sent_traders}")
+        self.frequent_traders.clear()
+
     def data_structures_processing(self):
         """
         Checks if a frequent trader is detected by iterating through
@@ -44,17 +56,11 @@ class TradersDetector:
             self.last_trade.pop(addr)
             self.possible_traders.pop(addr)
 
-        print(
-            f"size of frequent traders= {len(self.frequent_traders)}, ft ={self.frequent_traders}"
-        )
+        # print(
+        #     f"size of frequent traders= {len(self.frequent_traders)}, ft ={self.frequent_traders}"
+        # )
 
-        for addr in self.frequent_traders:
-            print(f"addr: {addr}")
-            # send to kafka wallet address
-            self.producer.send("frequent-traders", bytes(addr, encoding="utf-8"))
-        self.sent_traders |= self.frequent_traders
-        print(f"sent_traders{self.sent_traders}")
-        self.frequent_traders = set()
+        self.kafka_send_frequent_traders()
         return
 
     async def main(self):
