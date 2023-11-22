@@ -7,13 +7,13 @@ const TopNav = () => {
   const [apiStatus, setApiStatus] = useState('Loading...');
   const [dbStatus, setDbStatus] = useState('Loading...');
 
-  const apiHost = import.meta.env.VITE_API_URL;
-  console.log(apiHost)
+  // const apiHost = import.meta.env.VITE_API_URL;
+  // console.log(apiHost)
 
   useEffect(() => {
     // Function to fetch API status
     const fetchApiStatus = () => {
-      fetch(`${apiHost}/`)
+      fetch('/api/')
         .then(response => response.json())
         .then(data => setApiStatus(data))
         .catch(() => setApiStatus('Error'));
@@ -21,7 +21,7 @@ const TopNav = () => {
 
     // Function to fetch Database status
     const fetchDbStatus = () => {
-      fetch(`${apiHost}/redis_status`)
+      fetch('/api/redis_status')
         .then(response => response.json())
         .then(data => setDbStatus(data))
         .catch(() => setDbStatus('Error'));

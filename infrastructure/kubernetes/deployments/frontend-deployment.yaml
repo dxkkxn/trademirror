@@ -15,12 +15,8 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: necs01/trade-mirror:frontend
+        image: necs01/trade-mirror:frontendnginx
+        imagePullPolicy: Always
         ports:
-        - containerPort: 4500
-        env:
-        - name: VITE_API_URL
-          valueFrom:
-            configMapKeyRef:
-              name: trade-mirror-configmap
-              key: VITE_API_URL
+        - containerPort: 80
+

@@ -15,7 +15,8 @@ spec:
     spec:
       containers:
       - name: rest-api
-        image: necs01/trade-mirror:api
+        image: necs01/trade-mirror:apinginx
+        imagePullPolicy: Always
         resources:
           limits:
             memory: "128Mi"

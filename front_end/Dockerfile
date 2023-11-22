@@ -1,7 +1,27 @@
-FROM node:20-bookworm
-WORKDIR /home/app
-EXPOSE 4500
-COPY ./front_end/package.json ./front_end/package-lock.json ./
-RUN npm i
-COPY ./front_end ./
-CMD ["npm","run","dev"]
+FROM node:14 as builder
+
+# make the 'app' folder the current working directory
+WORKDIR /app
+
+# copy both 'package.json' and 'package-lock.json' (if available)
+COPY package*.json ./
+
+# install project dependencies
+RUN npm install
+
+# copy project files and folders to the current working directory (i.e. 'app' folder)
+COPY . .
+
+# build app
+RUN npm run build
+
+FROM nginx:alpine
+COPY ./nginx/nginx.conf /etc/nginx/nginx.conf
+
+## Remove default nginx index pagec
+RUN rm -rf /usr/share/nginx/html/*
+
+# Copy from the stage 1
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+EXPOSE 80

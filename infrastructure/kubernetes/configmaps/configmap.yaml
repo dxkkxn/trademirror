@@ -3,7 +3,6 @@ kind: ConfigMap
 metadata:
   name: trade-mirror-configmap
 data:
-  VITE_API_URL: "http://rest-api-service:8000"
   REDIS_HOST: redis-service
   REDIS_PORT: "6379"
   BOOSTRAP_SERVER: "my-cluster-kafka-bootstrap:9092"
