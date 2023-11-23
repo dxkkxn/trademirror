@@ -4,11 +4,13 @@ import asyncio
 import websockets
 import json
 import time
+import requests
 from collections import defaultdict
 from kafka import KafkaProducer
 
 
 class TradersDetector:
+
     def __init__(self, time_limit, tptl):
         self.time_limit = time_limit  # time limit in seconds
         self.tptl = tptl  # Transaction Per Time Limit
@@ -19,16 +21,29 @@ class TradersDetector:
         self.frequent_traders = set()  # mapping wallet of frequent traders to
         # sent or not sent (kafka)
 
-        self.producer = KafkaProducer(bootstrap_servers="localhost:9092")
+        self.producer = KafkaProducer(bootstrap_servers="localhost:9092",
+                                      value_serializer=lambda v: json.dumps(v).encode('utf-8')
+                                      )
+
+    def getBalance(self, wallet):
+        """
+        Returns the total btc in the account
+        """
+        url = "https://blockchain.info/balance?active=" + wallet
+        data = requests.get(url).json()
+        return data[wallet]['final_balance'] # unit satoshi
 
     def kafka_send_frequent_traders(self):
         """
         sends through kafka the frequent traders
         """
         for addr in self.frequent_traders:
-            print(f"addr: {addr}")
-            # send to kafka wallet address
-            self.producer.send("frequent-traders", bytes(addr, encoding="utf-8"))
+            balance = self.getBalance(addr)
+            obj = {
+                'addr': addr,
+                'balance': balance
+            }
+            self.producer.send("frequent-traders", value=obj)
         self.sent_traders |= self.frequent_traders
         print(f"sent_traders{self.sent_traders}")
         self.frequent_traders.clear()
