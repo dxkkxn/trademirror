@@ -1,5 +1,6 @@
 version: "3"
 services:
+  # ------- DATABASE ----------
   redis:
     image: ${REDIS_IMAGE}
     container_name: ${REDIS_CONTAINER}
@@ -17,6 +18,8 @@ services:
       - ${REDIS_COMMANDER_PORT}:8081
     networks:
       - trade-mirror-network
+  # -------------------------------
+  # ---------BACKEND --------------
   restapi:
     image: ${RESTAPI_IMAGE}
     container_name: ${RESTAPI_CONTAINER}
@@ -31,6 +34,8 @@ services:
       - ${RESTAPI_PORT}:8000
     networks:
       - trade-mirror-network
+  # -------------------------------
+  # ---------- FRONTEND -----------
   frontend:
     image: ${FRONTEND_IMAGE}
     container_name: ${FRONTEND_CONTAINER}
@@ -45,31 +50,75 @@ services:
       - ${FRONTEND_PORT}:4500
     networks:
       - trade-mirror-network
-  # this should be implemented after
-  # nginx:
-  #   build:
-  #     context: ${PWD}
-  #     dockerfile: ./nginx/Dockerfile
-  #   depends_on:
-  #     - restapi
-  #     - frontend
-  #   restart: always
-  #   ports:
-  #     - ${NGINX_PORT}:80
-  #   networks:
-  #     - trade-mirror-network
-  # auth:
-  #   image: ${AUTH_IMAGE}
-  #   container_name: ${AUTH_CONTAINER}
-  #   build:
-  #     context: ${PWD}
-  #     dockerfile: ./auth/Dockerfile
-  #   env_file:
-  #     - ./auth/.env
-  #   depends_on:
-  #     - redis
-  #   networks:
-  #     - trade-mirror-network
+    #---------------------------------
+    # ------------KAFKA---------------
+  zookeeper:
+    image: ${ZOOKEEPER_IMAGE}
+    container_name: ${ZOOKEEPER_CONTAINER}
+    ports:
+      - ${ZOOKEEPER_PORT}:2181
+    environment:
+      ZOOKEEPER_CLIENT_PORT: ${ZOOKEEPER_PORT}
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - trade-mirror-network
+  kafka:
+    # "`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-
+    # An important note about accessing Kafka from clients on other machines:
+    # -----------------------------------------------------------------------
+    #
+    # The config used here exposes port 9092 for _external_ connections to the broker
+    # i.e. those from _outside_ the docker network. This could be from the host machine
+    # running docker, or maybe further afield if you've got a more complicated setup.
+    # If the latter is true, you will need to change the value 'localhost' in
+    # KAFKA_ADVERTISED_LISTENERS to one that is resolvable to the docker host from those
+    # remote clients
+    #
+    # For connections _internal_ to the docker network, such as from other services
+    # and components, use kafka:29092.
+    #
+    # See https://rmoff.net/2018/08/02/kafka-listeners-explained/ for details
+    # "`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-
+    #
+    image: ${KAFKA_IMAGE}
+    container_name: ${KAFKA_CONTAINER}
+    ports:
+      - ${KAFKA_PORT}:9092
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on:
+      - zookeeper
+    networks:
+      - trade-mirror-network
+  producer_ftd:
+    image: ${PRODUCER_FTD_IMAGE}
+    container_name: ${PRODUCER_FTD_CONTAINER}
+    build:
+      context: ${PWD}
+      dockerfile: ./frequent_traders_detection/Dockerfile.producer
+    env_file:
+      - ./frequent_traders_detection/.env.test
+    depends_on:
+      - kafka
+    networks:
+      - trade-mirror-network
+  consumer_ftd:
+    image: ${CONSUMER_FTD_IMAGE}
+    container_name: ${CONSUMER_FTD_CONTAINER}
+    build:
+      context: ${PWD}
+      dockerfile: ./frequent_traders_detection/Dockerfile.consumer
+    env_file:
+      - ./frequent_traders_detection/.env.test
+    depends_on:
+      - producer_ftd
+    networks:
+      - trade-mirror-network
 networks:
   trade-mirror-network:
     driver: bridge

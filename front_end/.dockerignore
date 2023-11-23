@@ -1,2 +1,3 @@
-manifest/
-node_modules/
+manifest/*
+node_modules/*
+.env
