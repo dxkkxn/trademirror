@@ -7,6 +7,7 @@ import time
 import requests
 from collections import defaultdict
 from kafka import KafkaProducer
+import os
 
 class TradersDetector:
     def __init__(self, time_limit, tptl):
@@ -19,10 +20,23 @@ class TradersDetector:
         self.frequent_traders = set()  # mapping wallet of frequent traders to
         # sent or not sent (kafka)
 
+        # ----- yousseff--------
+
+        # self.producer = KafkaProducer(
+        #     bootstrap_servers="localhost:9092",
+        #     value_serializer=lambda v: json.dumps(v).encode("utf-8"),
+        # )
+
+        # -----------------------
+
+        # ------ k8s -----------
+        boostrap_server = os.environ.get("BOOSTRAP_SERVER")
+
         self.producer = KafkaProducer(
-            bootstrap_servers="localhost:9092",
+            bootstrap_servers= boostrap_server,
             value_serializer=lambda v: json.dumps(v).encode("utf-8"),
         )
+        #- ---------------------
 
     def getBalance(self, wallet):
         """
@@ -39,7 +53,14 @@ class TradersDetector:
         for addr in self.frequent_traders:
             balance = self.getBalance(addr)
             obj = {"addr": addr, "balance": balance}
-            self.producer.send("frequent-traders", value=obj)
+            # --------- youssef ----------
+            # self.producer.send("frequent-traders", value=obj)
+            # ----------------------------
+
+            # ---------- k8s -------------
+            topic_frequent_traders = os.environ.get("TOPIC_FREQUENT_TRADERS")
+            self.producer.send(topic_frequent_traders,value=obj)
+            #-----------------------------
         self.sent_traders |= self.frequent_traders
         print(f"sent_traders{self.sent_traders}")
         self.frequent_traders.clear()
@@ -89,7 +110,7 @@ class TradersDetector:
     async def main(self):
         async with websockets.connect("wss://ws.blockchain.info/inv") as client:
             print("[main] Connected to wss://ws.blockchain.info/inv")
-            logger.info("[main] Connected to wss://ws.blockchain.info/inv")
+            # logger.info("[main] Connected to wss://ws.blockchain.info/inv")
 
             cmd = '{"op":"unconfirmed_sub"}'
             await client.send(cmd)
