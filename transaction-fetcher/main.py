@@ -61,9 +61,9 @@ def compute_tx(op, wallet, tx):
         }
         redis_client.lpush(wallet+":op", json.dumps(new_op))
         redis_client.hset(wallet, "balance", current_balance+tx['value'])
-    # print(f"updated wallet {wallet}")
-    # print(redis_client.hgetall(wallet))
-    # print(redis_client.lrange(wallet+":op", 0, -1))
+    print(f"updated wallet {wallet}")
+    print(redis_client.hgetall(wallet))
+    print(redis_client.lrange(wallet+":op", 0, -1))
 
 
 
