@@ -11,7 +11,7 @@ from kafka import KafkaProducer
 class TradersDetector:
     def __init__(self, time_limit, tptl):
         self.time_limit = time_limit  # time limit in seconds
-        self.tptl = tptl  # Trasaction Per Time Limit
+        self.tptl = tptl  # Transaction Per Time Limit
         self.possible_traders = defaultdict(lambda: 0)  # dict mapping wallets
         # to time the wallet was involved in a trade
         self.last_trade = {}  # dict mapping each wallet to the last traded time
@@ -55,13 +55,21 @@ class TradersDetector:
         for addr in addr_to_remove:
             self.last_trade.pop(addr)
             self.possible_traders.pop(addr)
-
-        # print(
-        #     f"size of frequent traders= {len(self.frequent_traders)}, ft ={self.frequent_traders}"
-        # )
-
         self.kafka_send_frequent_traders()
-        return
+
+    def get_inputs(self, tx):
+        inputs = set()
+        for input_ in tx["x"]["inputs"]:
+            inputs.add(input_["prev_out"]["addr"])
+        return inputs
+
+    def get_outputs(self, tx):
+        outputs = set()
+        for out in tx["x"]["out"]:
+            out_addr = out["addr"]
+            outputs.add(out_addr)
+        return outputs
+
 
     async def main(self):
         async with websockets.connect("wss://ws.blockchain.info/inv") as client:
@@ -74,18 +82,12 @@ class TradersDetector:
             while True:
                 message = await client.recv()
                 dictm = json.loads(message)
-                for input_ in dictm["x"]["inputs"]:
-                    input_addr = input_["prev_out"]["addr"]
-                    if not input_addr:
-                        continue
+                for input_addr in self.get_inputs(dictm):
                     if input_addr in self.sent_traders:
                         continue
                     self.possible_traders[input_addr] += 1
                     self.last_trade[input_addr] = time.time()
-                for out in dictm["x"]["out"]:
-                    out_addr = out["addr"]
-                    if not out_addr:
-                        continue
+                for out_addr in self.get_outputs(dictm):
                     if out_addr in self.sent_traders:
                         continue
                     self.possible_traders[out_addr] += 1
