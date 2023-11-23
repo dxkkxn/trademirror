@@ -75,13 +75,18 @@ class TradersDetector:
     def get_inputs(self, tx):
         inputs = set()
         for input_ in tx["x"]["inputs"]:
-            inputs.add(input_["prev_out"]["addr"])
+            addr = input_["prev_out"]["addr"]
+            if addr is None: # why wtf??
+                return inputs
+            inputs.add(addr)
         return inputs
 
     def get_outputs(self, tx):
         outputs = set()
         for out in tx["x"]["out"]:
-            out_addr = out["addr"]
+            out_addr = out['addr']
+            if out_addr is None: # really wtf?
+                return outputs
             outputs.add(out_addr)
         return outputs
 
