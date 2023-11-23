@@ -8,9 +8,7 @@ import requests
 from collections import defaultdict
 from kafka import KafkaProducer
 
-
 class TradersDetector:
-
     def __init__(self, time_limit, tptl):
         self.time_limit = time_limit  # time limit in seconds
         self.tptl = tptl  # Transaction Per Time Limit
@@ -21,9 +19,10 @@ class TradersDetector:
         self.frequent_traders = set()  # mapping wallet of frequent traders to
         # sent or not sent (kafka)
 
-        self.producer = KafkaProducer(bootstrap_servers="localhost:9092",
-                                      value_serializer=lambda v: json.dumps(v).encode('utf-8')
-                                      )
+        self.producer = KafkaProducer(
+            bootstrap_servers="localhost:9092",
+            value_serializer=lambda v: json.dumps(v).encode("utf-8"),
+        )
 
     def getBalance(self, wallet):
         """
@@ -31,7 +30,7 @@ class TradersDetector:
         """
         url = "https://blockchain.info/balance?active=" + wallet
         data = requests.get(url).json()
-        return data[wallet]['final_balance'] # unit satoshi
+        return data[wallet]["final_balance"]  # unit satoshi
 
     def kafka_send_frequent_traders(self):
         """
@@ -39,10 +38,7 @@ class TradersDetector:
         """
         for addr in self.frequent_traders:
             balance = self.getBalance(addr)
-            obj = {
-                'addr': addr,
-                'balance': balance
-            }
+            obj = {"addr": addr, "balance": balance}
             self.producer.send("frequent-traders", value=obj)
         self.sent_traders |= self.frequent_traders
         print(f"sent_traders{self.sent_traders}")
@@ -76,7 +72,7 @@ class TradersDetector:
         inputs = set()
         for input_ in tx["x"]["inputs"]:
             addr = input_["prev_out"]["addr"]
-            if addr is None: # why wtf??
+            if addr is None:  # why wtf??
                 return inputs
             inputs.add(addr)
         return inputs
@@ -84,16 +80,16 @@ class TradersDetector:
     def get_outputs(self, tx):
         outputs = set()
         for out in tx["x"]["out"]:
-            out_addr = out['addr']
-            if out_addr is None: # really wtf?
+            out_addr = out["addr"]
+            if out_addr is None:  # really wtf?
                 return outputs
             outputs.add(out_addr)
         return outputs
 
-
     async def main(self):
         async with websockets.connect("wss://ws.blockchain.info/inv") as client:
             print("[main] Connected to wss://ws.blockchain.info/inv")
+            logger.info("[main] Connected to wss://ws.blockchain.info/inv")
 
             cmd = '{"op":"unconfirmed_sub"}'
             await client.send(cmd)
