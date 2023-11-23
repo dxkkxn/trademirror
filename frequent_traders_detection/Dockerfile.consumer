@@ -1,9 +1,0 @@
-FROM python:3.12-slim-bookworm
-
-RUN apt-get update && apt-get upgrade -y
-
-WORKDIR /app
-COPY ./frequent_traders_detection/requirements.txt /app
-RUN pip install --no-cache-dir --requirement /app/requirements.txt
-COPY ./frequent_traders_detection/ /app
-CMD ["python3","consumer.py"]
