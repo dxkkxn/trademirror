@@ -89,7 +89,6 @@ class TradersDetector:
     async def main(self):
         async with websockets.connect("wss://ws.blockchain.info/inv") as client:
             print("[main] Connected to wss://ws.blockchain.info/inv")
-            logger.info("[main] Connected to wss://ws.blockchain.info/inv")
 
             cmd = '{"op":"unconfirmed_sub"}'
             await client.send(cmd)
