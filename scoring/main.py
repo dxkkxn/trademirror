@@ -101,7 +101,7 @@ if __name__ == "__main__":
     # ---------- k8s ---------
     redis_host = os.environ.get("REDIS_HOST")
     redis_port = os.environ.get("REDIS_PORT")
-    redis_client = redis.Redis(host=redis_host, redis_port=redis_port, db=0)
+    redis_client = redis.Redis(host=redis_host, port=redis_port, db=0)
     # ----------------------
 
     ftw = redis_client.lrange("frequent-trading-wallets", 0, -1)
