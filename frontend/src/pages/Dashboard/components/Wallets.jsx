@@ -1,8 +1,33 @@
-import React from 'react';
+import React , { useState, useEffect } from 'react';
 import { CustomCard } from '../../../chakra/CustomCard';
 import { Box, Button, Flex, Grid, HStack, Stack, Text } from '@chakra-ui/react';
 
+const fetchIntervalVal = 3
+
 const Wallets = () => {
+  const dbFetchInterval = 3
+  const [lastTransactionsPublic, setLastTransactionsPublic] = useState({})
+
+  // Function ro fetch last n transactions
+  const fetchTransactionsPublic = () => {
+    fetch('/api/latest_transactions')
+    .then(response => response.json())
+    .then(data => setLastTransactionsPublic(data))
+    catch(() => console.log('Error fetching wallets'));
+  }
+
+  const treatData = () => {
+    // treats data contained in lastTransactionsPublic
+    for wallet in lastTransactionsPublic {
+    }
+  }
+
+  const fetchInterval = setInterval(() => {
+    fetchTransactionsPublic(10);
+    console.log(lastTransactionsPublic);
+    // treatData();
+  }, 1000 * fetchIntervalVal); // polling all relevant data
+
   const Wallets = [
     {
         id: "1",
@@ -14,7 +39,7 @@ const Wallets = () => {
         id: "2",
         text: "1NDHh3fJ29hC6pFNGcNR62EHRNJy22E4S2",
         price: "$5,123",
-        '24-hChange': "+0.34%"
+        '24-hChange': "-3000$"
     },
     {
         id: "3",
@@ -22,10 +47,6 @@ const Wallets = () => {
         price: "$2,096",
         '24-hChange': "+3.04%"
     },
-    
-    
-    
- 
      
   ];
 
@@ -33,23 +54,22 @@ const Wallets = () => {
     <CustomCard borderRadius="xl">
         <Text textStyle="h2" color="black.80" >Wallets</Text>
         <Stack>
-            {Wallets.map((wallet) => (
-                <Flex p="1" key={wallet.id} gap="4" w="full" >
+            {lastTransactionsPublic.map((wallet) => (
+                <Flex p="1" key=wallet['wallet'] gap="4" w="full" >
                     
                     <Flex justify="space-between" w="full" >
                         <Stack >
-                            <Text textStyle="h6" style={{ color: wallet.id <2 || wallet.id == 3 ? 'green' : 'black' }}>
-                                {wallet.text}
+                            <Text textStyle="h6" style={{ color: wallet['balance_update'].includes('+') ? 'green' : 'red' }}>
+                                {wallet['wallet']}
                             </Text>
-                            <Text fontSize="sm" style={{ color: wallet['24-hChange'].includes('+') ? 'green' : 'red' }} >
-                                {wallet['24-hChange']}
+                            <Text fontSize="sm" style={{ color: wallet['balance_update'].includes('+') ? 'green' : 'red' }} >
+                                {wallet['balance_update']}
                             </Text>
 
                         </Stack>
-                        <Text textStyle="h6"  style={{ color: wallet.id <2 || wallet.id == 3  ? 'green' : 'black' }}>
-                                {wallet.price}
+                        <Text textStyle="h6"  style={{ color: wallet['balance_update'].includes('+') ? 'green' : 'red' }}>
+                                {wallet['current_balance']}
                             </Text>
-
                     </Flex>
                 </Flex>
             ))}
