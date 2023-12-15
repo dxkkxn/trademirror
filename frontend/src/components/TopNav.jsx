@@ -2,7 +2,7 @@ import { Box, Button, Container, Flex, HStack, Heading, Icon, Menu, MenuButton, 
 import React , { useState, useEffect } from 'react';
 import {FaSignOutAlt} from "react-icons/fa";
 
-const dbStatusInterval = 10
+const dbStatusIntervalVal = 10
 
 const TopNav = () => {
 
@@ -38,7 +38,7 @@ const TopNav = () => {
     const statusInterval = setInterval(() => {
       fetchApiStatus();
       fetchDbStatus();
-    }, 1000*dbStatusInterval); // polling every 5 seconds
+    }, 1000*statusIntervalVal); // polling every 5 seconds
     
     console.log(apiStatus, dbStatus)
 

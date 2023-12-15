@@ -13,18 +13,17 @@ const Wallets = () => {
     fetch('/api/latest_transactions')
     .then(response => response.json())
     .then(data => setLastTransactionsPublic(data))
-    catch(() => console.log('Error fetching wallets'));
+    .then(console.log(lastTransactionsPublic))
+    .catch(() => console.log('Error fetching wallets'));
   }
+
 
   const treatData = () => {
     // treats data contained in lastTransactionsPublic
-    for wallet in lastTransactionsPublic {
-    }
   }
 
   const fetchInterval = setInterval(() => {
     fetchTransactionsPublic(10);
-    console.log(lastTransactionsPublic);
     // treatData();
   }, 1000 * fetchIntervalVal); // polling all relevant data
 
@@ -55,7 +54,7 @@ const Wallets = () => {
         <Text textStyle="h2" color="black.80" >Wallets</Text>
         <Stack>
             {lastTransactionsPublic.map((wallet) => (
-                <Flex p="1" key=wallet['wallet'] gap="4" w="full" >
+                <Flex p="1" key={wallet['wallet']} gap="4" w="full" >
                     
                     <Flex justify="space-between" w="full" >
                         <Stack >
