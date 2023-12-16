@@ -19,39 +19,43 @@ services:
     networks:
       - trade-mirror-network
   # -------------------------------
+
+  #---------------- NABIL------------------
   # ---------BACKEND --------------
-  restapi:
-    image: ${RESTAPI_IMAGE}
-    container_name: ${RESTAPI_CONTAINER}
-    build:
-      context: ${PWD}
-      dockerfile: ./rest_api/Dockerfile
-    env_file:
-      - ./rest_api/.env.test
-    depends_on:
-      - redis
-    ports:
-      - ${RESTAPI_PORT}:8000
-    networks:
-      - trade-mirror-network
+  # restapi:
+  #   image: ${RESTAPI_IMAGE}
+  #   container_name: ${RESTAPI_CONTAINER}
+  #   build:
+  #     context: ${PWD}
+  #     dockerfile: ./rest_api/Dockerfile
+  #   env_file:
+  #     - ./rest_api/.env.test
+  #   depends_on:
+  #     - redis
+  #   ports:
+  #     - ${RESTAPI_PORT}:8000
+  #   networks:
+  #     - trade-mirror-network
   # -------------------------------
   # ---------- FRONTEND -----------
-  frontend:
-    image: ${FRONTEND_IMAGE}
-    container_name: ${FRONTEND_CONTAINER}
-    build:
-      context: ${PWD}
-      dockerfile: ./front_end/Dockerfile
-    env_file:
-      - ./front_end/.env.test
-    depends_on:
-      - restapi
-    ports:
-      - ${FRONTEND_PORT}:4500
-    networks:
-      - trade-mirror-network
-    #---------------------------------
-    # ------------KAFKA---------------
+  # frontend:
+  #   image: ${FRONTEND_IMAGE}
+  #   container_name: ${FRONTEND_CONTAINER}
+  #   build:
+  #     context: ${PWD}
+  #     dockerfile: ./front_end/Dockerfile.test
+  #   env_file:
+  #     - ./front_end/.env.test
+  #   depends_on:
+  #     - restapi
+  #   ports:
+  #     - ${FRONTEND_PORT}:4500
+  #   networks:
+  #     - trade-mirror-network
+  #---------------------------------
+  #------------------- NABIL-----------------
+
+  # ------------KAFKA---------------
   zookeeper:
     image: ${ZOOKEEPER_IMAGE}
     container_name: ${ZOOKEEPER_CONTAINER}
@@ -91,32 +95,43 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_PRODUCER_VALUE_SERIALIZER: org.apache.kafka.common.serialization.StringSerializer # Specify the serializer for values
+      KAFKA_PRODUCER_VALUE_SERIALIZER_CLASS: io.confluent.kafka.serializers.KafkaJsonSerializer # Use the Kafka JSON serializer
     depends_on:
       - zookeeper
+    volumes:
+      - ./kafka:/home/appuser
+    command: sh -c "((sleep 15 && /bin/bash -c '/home/appuser/create_kafka_topic.sh' )&) && /etc/confluent/docker/run "
+    healthcheck:
+      test: /home/appuser/check_topic.sh
+      interval: 10s
+      retries: 5
+      timeout: 5s
     networks:
       - trade-mirror-network
-  producer_ftd:
-    image: ${PRODUCER_FTD_IMAGE}
-    container_name: ${PRODUCER_FTD_CONTAINER}
+  ftd:
+    image: ${FTD_IMAGE}
+    container_name: ${FTD_CONTAINER}
     build:
       context: ${PWD}
-      dockerfile: ./frequent_traders_detection/Dockerfile.producer
+      dockerfile: ./frequent_traders_detection/ftd/Dockerfile
     env_file:
-      - ./frequent_traders_detection/.env.test
+      - ./frequent_traders_detection/ftd/.env.test
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     networks:
       - trade-mirror-network
-  consumer_ftd:
-    image: ${CONSUMER_FTD_IMAGE}
-    container_name: ${CONSUMER_FTD_CONTAINER}
+  database_driver:
+    image: ${DATABASE_DRIVER_IMAGE}
+    container_name: ${DATABASE_DRIVER_CONTAINER}
     build:
       context: ${PWD}
-      dockerfile: ./frequent_traders_detection/Dockerfile.consumer
+      dockerfile: ./frequent_traders_detection/database-driver/Dockerfile
     env_file:
-      - ./frequent_traders_detection/.env.test
+      - ./frequent_traders_detection/database-driver/.env.test
     depends_on:
-      - producer_ftd
+      - ftd
     networks:
       - trade-mirror-network
 networks:
