@@ -1,8 +1,28 @@
-import React from 'react';
+import React , { useState, useEffect } from 'react';
 import { CustomCard } from '../../../chakra/CustomCard';
 import { Box, Button, Flex, Grid, HStack, Stack, Text } from '@chakra-ui/react';
 
+
 const HistorySection = () => {
+
+  const fetchIntervalVal = 3
+  const [lastTransactionsPrivate, setLastTransactionsPrivate] = useState({})
+
+   // Function ro fetch last n transactions
+  const fetchTransactionsPrivate = () => {
+     /*
+     fetch('/api/latest_transactions')
+     .then(response => response.json())
+      .then(data => setLastTransactionsPrivate(data))
+      console.log(data);*/
+      // catch
+  }
+
+  const fetchInterval = setInterval(() => {
+   fetchTransactionsPrivate(10);
+  }, 1000 * fetchIntervalVal); // polling all relevant data
+
+
   const transactions = [
     {
         id: "1",

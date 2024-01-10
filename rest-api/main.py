@@ -3,6 +3,7 @@ from controller import user
 from fastapi.middleware.cors import CORSMiddleware
 import redis
 import os
+import json
 
 REDIS_HOST = os.environ.get("REDIS_HOST")
 REDIS_PORT = os.environ.get("REDIS_PORT")
@@ -34,3 +35,26 @@ async def get_redis_status():
     except redis.ConnectionError:
         return {"Error Redis not working"}
 
+
+@app.get("/api/latest_transactions")
+async def get_latest_transactions():
+    try:
+        ftw = redis_db.lrange("frequent-trading-wallets", 0, 0)
+        print(ftw)
+        transactions = {}
+        for wallet in ftw:
+            transactions[wallet] = {}
+            last_transaction = redis_db.lrange(wallet + ":op", 0, 0)
+            for tx in last_transaction:
+                current_balance = int(str(redis_db.hget(wallet, "balance")))
+                previous_balance = int(json.loads(tx)["current_balance"])
+                print(previous_balance)
+                update_percentage = (current_balance - previous_balance) / previous_balance
+                transactions[wallet] = {
+                    "wallet": wallet,
+                    "current_balance": current_balance,
+                    "balance_update": ("+" if update_percentage >= 0 else "-") + str(update_percentage * 100) + "%",
+                }
+        return json.dumps(transactions)
+    except:
+        raise Exception("Failed at getting latest transactions")
