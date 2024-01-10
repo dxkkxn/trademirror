@@ -23,7 +23,7 @@ const Dashboard = () => {
            
     
         <GridItem colSpan={1}>
-           <HistorySection />
+          <HistorySection />
         </GridItem>
         <GridItem colSpan={1}>
            <Wallets />
