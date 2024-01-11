@@ -14,7 +14,6 @@ const Dashboard = () => {
               
             </Box>        
         </Flex>
-        <Portfoliosection/>
         <Grid gridTemplateColumns={{
             base: "repeat(1, 1fr)",
             md: "repeat(2, 1fr)",
@@ -26,6 +25,7 @@ const Dashboard = () => {
           <HistorySection />
         </GridItem>
         <GridItem colSpan={1}>
+          <Wallets />
         </GridItem>
         
         </Grid>
