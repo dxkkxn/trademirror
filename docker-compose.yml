@@ -20,14 +20,14 @@ services:
       - trade-mirror-network
   # -------------------------------
   # ---------BACKEND --------------
-  restapi:
+  rest-api-service:
     image: ${RESTAPI_IMAGE}
     container_name: ${RESTAPI_CONTAINER}
     build:
       context: ${PWD}
-      dockerfile: ./rest_api/Dockerfile
+      dockerfile: ./rest-api/Dockerfile
     env_file:
-      - ./rest_api/.env.test
+      - ./rest-api/.env
     depends_on:
       - redis
     ports:
@@ -41,17 +41,29 @@ services:
     container_name: ${FRONTEND_CONTAINER}
     build:
       context: ${PWD}
-      dockerfile: ./front_end/Dockerfile
-    env_file:
-      - ./front_end/.env.test
+      dockerfile: ./frontend/Dockerfile.dev
     depends_on:
-      - restapi
+      - rest-api-service
     ports:
       - ${FRONTEND_PORT}:4500
     networks:
       - trade-mirror-network
-    #---------------------------------
-    # ------------KAFKA---------------
+  #---------------------------------
+  # ----------NGINX----------------
+  nginx:
+    image: nginx:latest
+    container_name: "nginx-container"
+    ports:
+      - "4321:4321"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - frontend
+      - rest-api-service
+    networks:
+      - trade-mirror-network
+  # --------------------------------
+  # ------------KAFKA---------------
   zookeeper:
     image: ${ZOOKEEPER_IMAGE}
     container_name: ${ZOOKEEPER_CONTAINER}
@@ -91,34 +103,59 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_PRODUCER_VALUE_SERIALIZER: org.apache.kafka.common.serialization.StringSerializer # Specify the serializer for values
+      KAFKA_PRODUCER_VALUE_SERIALIZER_CLASS: io.confluent.kafka.serializers.KafkaJsonSerializer # Use the Kafka JSON serializer
     depends_on:
       - zookeeper
+    volumes:
+      - ./kafka:/home/appuser
+    command: sh -c "((sleep 15 && /bin/bash -c '/home/appuser/create_kafka_topic.sh' )&) && /etc/confluent/docker/run "
+    healthcheck:
+      test: /home/appuser/check_topic.sh
+      interval: 10s
+      retries: 5
+      timeout: 5s
     networks:
       - trade-mirror-network
-  producer_ftd:
-    image: ${PRODUCER_FTD_IMAGE}
-    container_name: ${PRODUCER_FTD_CONTAINER}
+  ftd:
+    image: ${FTD_IMAGE}
+    container_name: ${FTD_CONTAINER}
     build:
       context: ${PWD}
-      dockerfile: ./frequent_traders_detection/Dockerfile.producer
+      dockerfile: ./frequent-traders-detector/ftd/Dockerfile
     env_file:
-      - ./frequent_traders_detection/.env.test
+      - ./frequent-traders-detector/ftd/.env.test
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     networks:
       - trade-mirror-network
-  consumer_ftd:
-    image: ${CONSUMER_FTD_IMAGE}
-    container_name: ${CONSUMER_FTD_CONTAINER}
+  database_driver:
+    image: ${DATABASE_DRIVER_IMAGE}
+    container_name: ${DATABASE_DRIVER_CONTAINER}
     build:
       context: ${PWD}
-      dockerfile: ./frequent_traders_detection/Dockerfile.consumer
+      dockerfile: ./frequent-traders-detector/database-driver/Dockerfile
     env_file:
-      - ./frequent_traders_detection/.env.test
+      - ./frequent-traders-detector/database-driver/.env.test
     depends_on:
-      - producer_ftd
+      - ftd
     networks:
       - trade-mirror-network
+  transaction-fetcher:
+    image: "transaction_fetcher_image"
+    container_name: "transaction-fetcher-container"
+    build:
+      context: ${PWD}
+      dockerfile: ./transaction-fetcher/Dockerfile
+    environment:
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
+    depends_on:
+      - redis
+    networks:
+      - trade-mirror-network
+    
 networks:
   trade-mirror-network:
     driver: bridge

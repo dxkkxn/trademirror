@@ -5,14 +5,18 @@ import requests
 import websockets
 import asyncio
 import json
+import os
 from enum import Enum
-OP = Enum("OP", ['BUY', 'SELL'])
+
+OP = Enum("OP", ["BUY", "SELL"])
+
 
 def get_inputs(tx):
     inputs = set()
     for input_ in tx["x"]["inputs"]:
         inputs.add(input_["prev_out"]["addr"])
     return inputs
+
 
 def get_outputs(tx):
     outputs = set()
@@ -21,43 +25,47 @@ def get_outputs(tx):
         outputs.add(out_addr)
     return outputs
 
+
 def get_tx_input(tx_l, wallet):
     for tx in tx_l:
-        if wallet == tx['prev_out']['addr']:
-            return tx['prev_out']
-    raise NotImplementedError('wtf?')
+        if wallet == tx["prev_out"]["addr"]:
+            return tx["prev_out"]
+    raise NotImplementedError("wtf?")
+
 
 def get_tx_output(tx_l, wallet):
     for tx in tx_l:
-        if wallet == tx['addr']:
+        if wallet == tx["addr"]:
             return tx
-    raise NotImplementedError('wtf?')
+    raise NotImplementedError("wtf?")
+
 
 def get_bitcoin_price():
     res = requests.get("https://api.blockchain.com/v3/exchange/tickers/BTC-USD").json()
-    return res['last_trade_price']
+    return res["last_trade_price"]
+
 
 def compute_tx(op, wallet, tx):
     current_balance = int(REDIS_CLIENT.hget(wallet, 'balance').decode('utf-8'))
     btc_price = get_bitcoin_price() # in usd
     if op == OP.SELL:
-        tx = get_tx_input(tx['x']['inputs'], wallet)
+        tx = get_tx_input(tx["x"]["inputs"], wallet)
         new_op = {
-            'op': 'SELL',
-            'btc_price': btc_price,
-            'current_balance': current_balance,
-            'value': tx['value']
+            "op": "SELL",
+            "btc_price": btc_price,
+            "current_balance": current_balance,
+            "value": tx["value"],
         }
         REDIS_CLIENT.lpush(wallet+":op", json.dumps(new_op))
         REDIS_CLIENT.hset(wallet, "balance", current_balance-tx['value'])
     else:
-        assert(op == OP.BUY)
-        tx = get_tx_output(tx['x']['out'], wallet)
+        assert op == OP.BUY
+        tx = get_tx_output(tx["x"]["out"], wallet)
         new_op = {
-            'op': 'BUY',
-            'btc_price': btc_price,
-            'current_balance': current_balance,
-            'value': tx['value']
+            "op": "BUY",
+            "btc_price": btc_price,
+            "current_balance": current_balance,
+            "value": tx["value"],
         }
         REDIS_CLIENT.lpush(wallet+":op", json.dumps(new_op))
         REDIS_CLIENT.hset(wallet, "balance", current_balance+tx['value'])
@@ -97,7 +105,9 @@ def event_handler(msg):
 
 
 if __name__ == "__main__":
-    REDIS_CLIENT = StrictRedis(host="localhost", port=6379, db=0)
+    redis_host = os.environ.get("REDIS_HOST")
+    redis_port = os.environ.get("REDIS_PORT")
+    REDIS_CLIENT = StrictRedis(host=redis_host, port=redis_port, db=0)
     WALLETS = REDIS_CLIENT.lrange("frequent-trading-wallets", 0, -1)
     WALLETS = set(w.decode('utf-8') for w in WALLETS)
     pubsub = REDIS_CLIENT.pubsub()

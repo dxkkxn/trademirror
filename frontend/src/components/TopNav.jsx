@@ -2,11 +2,13 @@ import { Box, Button, Container, Flex, HStack, Heading, Icon, Menu, MenuButton, 
 import React , { useState, useEffect } from 'react';
 import {FaSignOutAlt} from "react-icons/fa";
 
+const dbStatusIntervalVal = 10
+
 const TopNav = () => {
 
   const [apiStatus, setApiStatus] = useState('Loading...');
   const [dbStatus, setDbStatus] = useState('Loading...');
-
+  const statusIntervalVal=5;
   // const apiHost = import.meta.env.VITE_API_URL;
   // console.log(apiHost)
 
@@ -27,20 +29,21 @@ const TopNav = () => {
         .catch(() => setDbStatus('Error'));
     };
 
+
     // Fetch statuses initially
     fetchApiStatus();
     fetchDbStatus();
 
     // Set up polling
-    const interval = setInterval(() => {
+    const statusInterval = setInterval(() => {
       fetchApiStatus();
       fetchDbStatus();
-    }, 10000); // polling every 5 seconds
-
+    }, 1000*statusIntervalVal); // polling every 5 seconds
+    
     console.log(apiStatus, dbStatus)
 
     // Cleanup function to clear the interval when the component is unmounted
-    return () => clearInterval(interval);
+    return () => clearInterval(statusInterval);
   }, []);
 
   return (

@@ -4,19 +4,19 @@ FROM node:14 as builder
 WORKDIR /app
 
 # copy both 'package.json' and 'package-lock.json' (if available)
-COPY package*.json ./
+COPY ./frontend/package*.json ./
 
 # install project dependencies
 RUN npm install
 
 # copy project files and folders to the current working directory (i.e. 'app' folder)
-COPY . .
+COPY ./frontend/ .
 
 # build app
 RUN npm run build
 
 FROM nginx:alpine
-COPY ./nginx/nginx.conf /etc/nginx/nginx.conf
+COPY ./frontend/nginx/nginx.conf /etc/nginx/nginx.conf
 
 ## Remove default nginx index pagec
 RUN rm -rf /usr/share/nginx/html/*

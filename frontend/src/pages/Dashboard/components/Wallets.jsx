@@ -1,65 +1,116 @@
-import React from 'react';
+import React , { useState, useEffect } from 'react';
 import { CustomCard } from '../../../chakra/CustomCard';
 import { Box, Button, Flex, Grid, HStack, Stack, Text } from '@chakra-ui/react';
 
 const Wallets = () => {
-  const Wallets = [
-    {
-        id: "1",
-        text: "1NDHh2fD29yC7pXNTcNB62RHTNJy11F5V7",
-        price: "$45,123",
-        '24-hChange': "-1.10%"
-    },
-    {
-        id: "2",
-        text: "1NDHh3fJ29hC6pFNGcNR62EHRNJy22E4S2",
-        price: "$5,123",
-        '24-hChange': "+0.34%"
-    },
-    {
-        id: "3",
-        text: "1NNHh2Fd29yC7pXNTcNB62RHTNjvU11TG5",
-        price: "$2,096",
-        '24-hChange': "+3.04%"
-    },
-    
-    
-    
+
+  const fetchIntervalVal = 3
+    const [lastTransactions, setLastTransactions] = useState({})
+
+    // Function to fetch last n transactions
+    const fetchTransactions = () => {
+    fetch('/api/latest_transactions')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok.');
+            }
+            return response.json();
+        })
+        .then(data => {
+            const dict = JSON.parse(data);
+            setLastTransactions(dict);
+        })
+        .catch(error => {
+            console.error('Error fetching transactions:', error);
+        });
+    }
+
+
+    // catch
+    useEffect(() => {
+        const fetchInterval = setInterval(() => {
+            fetchTransactions();
+        }, 1000 * fetchIntervalVal);
+        fetchTransactions();
+        return () => {
+          clearInterval(fetchInterval);
+        };
+      // polling all relevant data
+    }, []);
+
+  const treatData = () => {
+    // treats data contained in lastTransactionsPublic
+  };
+
+  const follow = (wallet_hash) => {
+    console.log("Called follow");
+    console.log(wallet_hash);
+    fetch('/api/follow_wallet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({wallet_hash: wallet_hash}),
+      })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok.');
+            }
+          else {
+            alert ("Followed successfully wallet");
+            return response.json();
+          }
+        })
+        .catch(error => {
+            console.error('Error following wallets:', error);
+        });
+    }
+
+
+
+return (
+            <CustomCard borderRadius="xl">
+                <Text textStyle="h2" color="black.80">Recent Global Transactions</Text>
+                  {Object.keys(lastTransactions).length === 0 ? (
+                    <Button w="full" mt="6" colorScheme="gray">
+                        View All
+                    </Button>
+                ) : (
+                  <Stack>
+                  {Object.keys(lastTransactions).map((key) => (
+                            <Flex p="1" key={key} gap="4" w="full">
  
-     
-  ];
+                              <Flex justify="space-between" w="full" >
+                                  <Stack >
+                                      <Text textStyle="h6">
+                                          <b>{lastTransactions[key].wallet}</b>
+                                      </Text>
+                                      <Button onClick={()=>follow(lastTransactions[key].wallet)} w="full" mt="6" colorScheme="green">
+                                        Follow
+                                      </Button>
 
-  return (
-    <CustomCard borderRadius="xl">
-        <Text textStyle="h2" color="black.80" >Wallets</Text>
-        <Stack>
-            {Wallets.map((wallet) => (
-                <Flex p="1" key={wallet.id} gap="4" w="full" >
-                    
-                    <Flex justify="space-between" w="full" >
-                        <Stack >
-                            <Text textStyle="h6" style={{ color: wallet.id <2 || wallet.id == 3 ? 'green' : 'black' }}>
-                                {wallet.text}
-                            </Text>
-                            <Text fontSize="sm" style={{ color: wallet['24-hChange'].includes('+') ? 'green' : 'red' }} >
-                                {wallet['24-hChange']}
-                            </Text>
+                                      <Text textStyle="h6">
+                                          Balance : {lastTransactions[key].current_balance} $ (
+                                            <span style={{ color: lastTransactions[key].balance_update.includes('+') ? 'green' : 'red' }}>
+                                            {lastTransactions[key].balance_update}
+                                          </span> )
+                                      </Text>
+                                      <Text textStyle="h6">
+                                          Bitcoin Price : {lastTransactions[key].btc_price}
+                                      </Text>
 
-                        </Stack>
-                        <Text textStyle="h6"  style={{ color: wallet.id <2 || wallet.id == 3  ? 'green' : 'black' }}>
-                                {wallet.price}
-                            </Text>
-
-                    </Flex>
-                </Flex>
-            ))}
-        </Stack>
-        <Button w="full" mt="6" colorScheme="gray">
-            View All
-        </Button>
-
-    </CustomCard>
-  );
-};
+                                  </Stack>
+                              </Flex>
+                               
+                            </Flex>
+                        ))}
+                        <Button w="full" mt="6" colorScheme="gray">
+                            View All
+                        </Button>
+                    </Stack>
+                )}
+            </CustomCard>
+        );
+    };
 
 export default Wallets;

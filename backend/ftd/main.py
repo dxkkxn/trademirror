@@ -6,6 +6,8 @@ import json
 import time
 from collections import defaultdict
 from kafka import KafkaProducer
+import os
+
 
 class TradersDetector:
     def __init__(self, time_limit, tptl):
@@ -17,18 +19,21 @@ class TradersDetector:
         self.sent_traders = set()  # wallets that have been already sent to DB
         self.frequent_traders = set()  # mapping wallet of frequent traders to
         # sent or not sent (kafka)
+        boostrap_server = os.environ.get("BOOSTRAP_SERVER")
 
         self.producer = KafkaProducer(
-            bootstrap_servers="127.0.0.1:9092",
+            bootstrap_servers=boostrap_server,
             value_serializer=lambda v: json.dumps(v).encode("utf-8"),
         )
+        # - ---------------------
 
     def kafka_send_frequent_traders(self):
         """
         sends through kafka the frequent traders
         """
+        topic_frequent_traders = os.environ.get("TOPIC_FREQUENT_TRADERS")
         for addr in self.frequent_traders:
-            self.producer.send("frequent-traders", value=addr)
+            self.producer.send(topic_frequent_traders, value=addr)
         self.sent_traders |= self.frequent_traders
         print(f"sent_traders{self.sent_traders}")
         self.frequent_traders.clear()

@@ -7,4 +7,5 @@ data:
   REDIS_PORT: "6379"
   BOOSTRAP_SERVER: "my-cluster-kafka-bootstrap:9092"
   LISTENER_PORT: "9092"
+  TOPIC_FREQUENT_TRADERS: "frequent-traders"
   SECURE_LISTENER_PORT: "9093" 
