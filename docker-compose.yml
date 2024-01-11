@@ -142,6 +142,20 @@ services:
       - ftd
     networks:
       - trade-mirror-network
+  transaction-fetcher:
+    image: "transaction_fetcher_image"
+    container_name: "transaction-fetcher-container"
+    build:
+      context: ${PWD}
+      dockerfile: ./transaction-fetcher/Dockerfile
+    environment:
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
+    depends_on:
+      - redis
+    networks:
+      - trade-mirror-network
+    
 networks:
   trade-mirror-network:
     driver: bridge
