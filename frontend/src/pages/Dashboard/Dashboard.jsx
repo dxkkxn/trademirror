@@ -26,7 +26,6 @@ const Dashboard = () => {
           <HistorySection />
         </GridItem>
         <GridItem colSpan={1}>
-           <Wallets />
         </GridItem>
         
         </Grid>

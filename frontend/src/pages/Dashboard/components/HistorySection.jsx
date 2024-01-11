@@ -8,7 +8,7 @@ const HistorySection = () => {
     const fetchIntervalVal = 3
     const [lastTransactionsPrivate, setLastTransactionsPrivate] = useState({})
 
-    // Function ro fetch last n transactions
+    // Function to fetch last n transactions
     const fetchTransactionsPrivate = () => {
     console.log("fetching...");
     fetch('/api/latest_transactions')
@@ -20,23 +20,29 @@ const HistorySection = () => {
         })
         .then(data => {
             console.log("latest fetched:");
-            console.log(data);
-            setLastTransactionsPrivate(data);
+            console.log(data); // {"wallet": {"wallet": "wallet", "current_balance": 150, "balance_update": "+200.0%"}}
+            console.log(typeof data); // string
+            const dict = JSON.parse(data);
+            console.log(dict); 
+            console.log(dict["wallet"].balance_update);
+            setLastTransactionsPrivate(dict);
         })
         .catch(error => {
             console.error('Error fetching transactions:', error);
-            // Handle errors here if necessary
         });
     }
 
     
-    fetchTransactionsPrivate();
     // catch
     useEffect(() => {
         const fetchInterval = setInterval(() => {
-            fetchTransactionsPrivate(10);
+            fetchTransactionsPrivate();
         }, 1000 * fetchIntervalVal);
-        return () => clearInterval(fetchInterval); // polling all relevant data
+        fetchTransactionsPrivate();
+        return () => {
+          clearInterval(fetchInterval);
+        };
+      // polling all relevant data
     }, []);
 
     /*
@@ -62,56 +68,42 @@ const HistorySection = () => {
         },
 
       ];*/
-    console.log("transactions : ")
-    console.log(lastTransactionsPrivate)
-
-    useEffect((lastTransactionsPrivate) => {
-        console.log('updating...');
-        if (lastTransactionsPrivate == undefined) {
-          return ( 
+    return (
             <CustomCard borderRadius="xl">
-                <Text textStyle="h2" color="black.80" >Recent Transactions</Text>
-                <Button w="full" mt="6" colorScheme="gray">
-                    View All
-                </Button>
-
-            </CustomCard>
-          )
-        }
-        else {
-          return (
-              <CustomCard borderRadius="xl">
-                  <Text textStyle="h2" color="black.80" >Recent Transactions</Text>
+                <Text textStyle="h2" color="black.80">Recent Transactions</Text>
+                  {Object.keys(lastTransactionsPrivate).length === 0 ? (
+                    <Button w="full" mt="6" colorScheme="gray">
+                        View All
+                    </Button>
+                ) : (
                   <Stack>
-                      {lastTransactionsPrivate.map((transaction) => (
-                          <Flex p="1" key={transaction.current_balance} gap="4" w="full" >
-
+                  {Object.keys(lastTransactionsPrivate).map((key) => (
+                            <Flex p="1" key={key} gap="4" w="full">
+ 
                               <Flex justify="space-between" w="full" >
                                   <Stack >
                                       <Text textStyle="h6">
-                                          {transaction.value}
+                                          <b>{lastTransactionsPrivate[key].wallet}</b>
                                       </Text>
-                                      <Text fontSize="sm" color="black.40">
-                                          {transaction.op}
+                                      <Text textStyle="h6">
+                                          Balance : {lastTransactionsPrivate[key].current_balance} $
+                                      </Text>
+                                      <Text fontSize="sm" color= {lastTransactionsPrivate[key].balance_update.includes('+') ? "green" : "red"}>
+                                          Evolution : {lastTransactionsPrivate[key].balance_update}
                                       </Text>
 
                                   </Stack>
-                                  <Text textStyle="h6">
-                                      {transaction.btc_price}
-                                  </Text>
-
                               </Flex>
-                          </Flex>
-                      ))}
-                  </Stack>
-                  <Button w="full" mt="6" colorScheme="gray">
-                      View All
-                  </Button>
-
-              </CustomCard>
-          )
-        }
-    });
-};
+                               
+                            </Flex>
+                        ))}
+                        <Button w="full" mt="6" colorScheme="gray">
+                            View All
+                        </Button>
+                    </Stack>
+                )}
+            </CustomCard>
+        );
+    };
 
 export default HistorySection;
