@@ -85,8 +85,8 @@ const PortfolioSection = () => {
       <Text textStyle="h2" fontWeight="medium"> Internal Server Error </Text>
     ) : (
       <HStack>
-        <Text textStyle="h2" fontWeight="medium"> $ {balance.btc} BTC </Text>
-        <Text textStyle="h2" fontWeight="medium"> $ {balance.fiat} $ </Text>
+        <Text textStyle="h2" fontWeight="medium"> {balance.btc} BTC </Text>
+        <Text textStyle="h2" fontWeight="medium"> {balance.fiat} $ </Text>
       </HStack>
     )}
     </Stack>

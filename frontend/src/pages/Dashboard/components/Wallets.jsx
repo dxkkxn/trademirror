@@ -17,8 +17,11 @@ const Wallets = () => {
             return response.json();
         })
         .then(data => {
-            const dict = JSON.parse(data);
-            setLastTransactions(dict);
+          let dict = JSON.parse(data);
+          if(dict.length > 5) {
+            dict = dict.slice(0,5);
+          }
+          setLastTransactions(dict);
         })
         .catch(error => {
             console.error('Error fetching transactions:', error);
@@ -92,7 +95,7 @@ return (
                                       <Text textStyle="h6">
                                           Balance : {lastTransactions[key].current_balance} $ (
                                             <span style={{ color: lastTransactions[key].balance_update.includes('+') ? 'green' : 'red' }}>
-                                            {lastTransactions[key].balance_update}
+                                            {parseFloat(lastTransactions[key].balance_update.replace('%', '')).toFixed(2) + '%'}
                                           </span> )
                                       </Text>
                                       <Text textStyle="h6">
