@@ -4,7 +4,6 @@ import asyncio
 import websockets
 import json
 import time
-import requests
 from collections import defaultdict
 from kafka import KafkaProducer
 
@@ -24,22 +23,12 @@ class TradersDetector:
             value_serializer=lambda v: json.dumps(v).encode("utf-8"),
         )
 
-    def getBalance(self, wallet):
-        """
-        Returns the total btc in the account
-        """
-        url = "https://blockchain.info/balance?active=" + wallet
-        data = requests.get(url).json()
-        return data[wallet]["final_balance"]  # unit satoshi
-
     def kafka_send_frequent_traders(self):
         """
         sends through kafka the frequent traders
         """
         for addr in self.frequent_traders:
-            balance = self.getBalance(addr)
-            obj = {"addr": addr, "balance": balance}
-            self.producer.send("frequent-traders", value=obj)
+            self.producer.send("frequent-traders", value=addr)
         self.sent_traders |= self.frequent_traders
         print(f"sent_traders{self.sent_traders}")
         self.frequent_traders.clear()

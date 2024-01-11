@@ -1,10 +1,10 @@
 version: "3"
 services:
-  database-driver:
-    image: database-driver
-    container_name: db-container
+  balance-fetcher:
+    image: balance-fetcher
+    container_name: bf-container
     build:
-      context: database-driver
+      context: balance-fetcher
       dockerfile: ../python.Dockerfile
     network_mode: host
   ftd:
