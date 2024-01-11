@@ -21,6 +21,13 @@ services:
       context: transaction-fetcher
       dockerfile: ../python.Dockerfile
     network_mode: host
+  scoring:
+    image: scoring
+    container_name: scoring-container
+    build:
+      context: scoring
+      dockerfile: ../python.Dockerfile
+    network_mode: host
   redis:
     image: redis
     container_name: redis-container
