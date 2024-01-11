@@ -9,6 +9,7 @@ from collections import defaultdict
 from kafka import KafkaProducer
 import os
 
+
 class TradersDetector:
     def __init__(self, time_limit, tptl):
         self.time_limit = time_limit  # time limit in seconds
@@ -31,12 +32,13 @@ class TradersDetector:
 
         # ------ k8s -----------
         boostrap_server = os.environ.get("BOOSTRAP_SERVER")
+        print(boostrap_server)
 
         self.producer = KafkaProducer(
-            bootstrap_servers= boostrap_server,
+            bootstrap_servers=boostrap_server,
             value_serializer=lambda v: json.dumps(v).encode("utf-8"),
         )
-        #- ---------------------
+        # - ---------------------
 
     def getBalance(self, wallet):
         """
@@ -59,8 +61,9 @@ class TradersDetector:
 
             # ---------- k8s -------------
             topic_frequent_traders = os.environ.get("TOPIC_FREQUENT_TRADERS")
-            self.producer.send(topic_frequent_traders,value=obj)
-            #-----------------------------
+            print(obj)
+            self.producer.send(topic_frequent_traders, value=obj)
+            # -----------------------------
         self.sent_traders |= self.frequent_traders
         print(f"sent_traders{self.sent_traders}")
         self.frequent_traders.clear()

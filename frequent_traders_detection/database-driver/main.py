@@ -19,6 +19,7 @@ topic_frequent_traders = os.environ.get("TOPIC_FREQUENT_TRADERS")
 # print(f"{redis_host} - {redis_port} - {boostrap_server} - {topic_frequent_traders}")
 
 redis_client = redis.Redis(host=redis_host, port=redis_port, db=0)
+print(boostrap_server)
 consumer = KafkaConsumer(
     topic_frequent_traders,
     value_deserializer=lambda x: json.loads(x.decode("utf-8")),
