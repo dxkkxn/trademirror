@@ -1,29 +1,28 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: kafka-producer
+  name: scoring-deployment
   namespace: default
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: kafka-producer
+      app: scoring 
   template:
     metadata:
       labels:
-        app: kafka-producer
+        app: scoring
     spec:
       containers:
-        - name: kafka-producer
-          image: juanpabloinformatica/producer_ftd:dev
+        - name: scoring
+          image: juanpabloinformatica/scoring:dev
           imagePullPolicy: Always
           env:
-          - name: BOOSTRAP_SERVER
-            valueFrom:
-              configMapKeyRef:
-                name: trade-mirror-configmap
-                key: BOOSTRAP_SERVER
-
+          # - name: BOOSTRAP_SERVER
+          #   valueFrom:
+          #     configMapKeyRef:
+          #       name: trade-mirror-configmap
+          #       key: BOOSTRAP_SERVER
           - name: REDIS_HOST
             valueFrom:
               configMapKeyRef:
@@ -34,8 +33,4 @@ spec:
               configMapKeyRef:
                 name: trade-mirror-configmap
                 key: REDIS_PORT
-          - name: TOPIC_FREQUENT_TRADERS
-            valueFrom:
-              configMapKeyRef:
-                name: trade-mirror-configmap
-                key: TOPIC_FREQUENT_TRADERS 
+
