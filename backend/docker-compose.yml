@@ -2,14 +2,23 @@ version: "3"
 services:
   database-driver:
     image: database-driver
+    container_name: db-container
     build:
       context: database-driver
       dockerfile: ../python.Dockerfile
     network_mode: host
   ftd:
     image: frequent-traders-detector
+    container_name: ftd-container
     build:
       context: ftd
+      dockerfile: ../python.Dockerfile
+    network_mode: host
+  transaction-fetcher:
+    image: transaction-fetcher
+    container_name: tf-container
+    build:
+      context: transaction-fetcher
       dockerfile: ../python.Dockerfile
     network_mode: host
   redis:
@@ -18,7 +27,7 @@ services:
     network_mode: host
   rediscommander:
     image: rediscommander/redis-commander
-    container_name: redis_commander_container
+    container_name: redis-commander-container
     restart: always
     environment:
       - REDIS_HOSTS=local:localhost:6379
