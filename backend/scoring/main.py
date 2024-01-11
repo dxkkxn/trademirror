@@ -2,10 +2,13 @@
 
 from redis import StrictRedis
 import json
+import os
 
 # def compute_score(wallets, redis_client):
 
-REDIS_CLIENT = StrictRedis(host="localhost", port=6379, db=0, decode_responses=True)
+redis_host = os.environ.get("REDIS_HOST")
+redis_port = os.environ.get("REDIS_PORT")
+REDIS_CLIENT = StrictRedis(host=redis_host, port=redis_port, db=0, decode_responses=True)
 
 def compute_score(wallet):
     print(f"computing score for wallet {wallet}...")
