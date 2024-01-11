@@ -17,7 +17,10 @@ const Wallets = () => {
             return response.json();
         })
         .then(data => {
-          const dict = JSON.parse(data);
+          let dict = JSON.parse(data);
+          if(dict.length > 5) {
+            dict = dict.slice(0,5);
+          }
           setLastTransactions(dict);
         })
         .catch(error => {
