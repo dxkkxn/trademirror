@@ -24,6 +24,7 @@ const PortfolioSection = () => {
       })
       .then(data => {
         const dict = JSON.parse(data);
+        console.log(data);
         setBalance(dict);
       })
       .catch(error => {
@@ -41,12 +42,6 @@ const PortfolioSection = () => {
     };
     // polling all relevant data
   }, []);
-
-  const treatData = () => {
-    // treats data contained in lastTransactionsPublic
-  };
-
-
 
 
   return (
@@ -86,12 +81,15 @@ const PortfolioSection = () => {
     <HStack color="black.80">
     <Text fontSize="sm" fontWeight="medium">Your Wallet Balance</Text>
     </HStack>
-    <Text textStyle="h2" fontWeight="medium"> $ {balance} </Text>
+    {balance == null ? (
+      <Text textStyle="h2" fontWeight="medium"> Internal Server Error </Text>
+    ) : (
+      <HStack>
+        <Text textStyle="h2" fontWeight="medium"> $ {balance.btc} BTC </Text>
+        <Text textStyle="h2" fontWeight="medium"> $ {balance.fiat} $ </Text>
+      </HStack>
+    )}
     </Stack>
-
-
-
-
     </HStack>
 
 
