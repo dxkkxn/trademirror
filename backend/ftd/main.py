@@ -19,10 +19,10 @@ class TradersDetector:
         self.sent_traders = set()  # wallets that have been already sent to DB
         self.frequent_traders = set()  # mapping wallet of frequent traders to
         # sent or not sent (kafka)
-        boostrap_server = os.environ.get("BOOSTRAP_SERVER")
+        bootstrap_server = os.environ.get("BOOTSTRAP_SERVER")
 
         self.producer = KafkaProducer(
-            bootstrap_servers=boostrap_server,
+            bootstrap_servers=bootstrap_server,
             value_serializer=lambda v: json.dumps(v).encode("utf-8"),
         )
         # - ---------------------
