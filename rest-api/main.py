@@ -82,7 +82,7 @@ async def get_user_balance():
 
 
 @app.get("/api/user_history")
-async def get_user_balance():
+async def get_user_history():
     try:
         parsed_transactions = []
         user_transactions = redis_db.lrange("users:transactions:" + "default_user", 0, -1)
