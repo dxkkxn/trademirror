@@ -100,8 +100,7 @@ def event_handler(msg):
     global WALLETS
     WALLETS = REDIS_CLIENT.lrange("frequent-trading-wallets", 0, -1)
     WALLETS = set(w.decode('utf-8') for w in WALLETS)
-    print("tracking {len(WALLETS)} wallets")
-
+    print(f"tracking {len(WALLETS)} wallets")
 
 
 if __name__ == "__main__":
