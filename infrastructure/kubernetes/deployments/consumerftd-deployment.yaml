@@ -17,3 +17,26 @@ spec:
         - name: kafka-consumer
           image: juanpabloinformatica/consumer_ftd:dev
           imagePullPolicy: Always
+          env:
+          - name: BOOSTRAP_SERVER
+            valueFrom:
+              configMapKeyRef:
+                name: trade-mirror-configmap
+                key: BOOSTRAP_SERVER
+          - name: REDIS_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: trade-mirror-configmap
+                key: REDIS_HOST
+          - name: REDIS_PORT
+            valueFrom:
+              configMapKeyRef:
+                name: trade-mirror-configmap
+                key: REDIS_PORT
+          - name: TOPIC_FREQUENT_TRADERS
+            valueFrom:
+              configMapKeyRef:
+                name: trade-mirror-configmap
+                key: TOPIC_FREQUENT_TRADERS 
+
+
