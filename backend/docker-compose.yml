@@ -24,7 +24,11 @@ services:
   redis:
     image: redis
     container_name: redis-container
+    volumes:
+        - ./redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
     network_mode: host
+
   rediscommander:
     image: rediscommander/redis-commander
     container_name: redis-commander-container
