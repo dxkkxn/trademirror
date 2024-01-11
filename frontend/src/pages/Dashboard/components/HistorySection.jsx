@@ -25,8 +25,6 @@ const HistorySection = () => {
           {
             dict = dict.slice(0,5);
           }
-          console.log('user history :');
-          console.log(dict);
           setHistory(dict);
         })
         .catch(error => {

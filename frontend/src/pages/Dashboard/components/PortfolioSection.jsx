@@ -24,7 +24,6 @@ const PortfolioSection = () => {
       })
       .then(data => {
         const dict = JSON.parse(data);
-        console.log(data);
         setBalance(dict);
       })
       .catch(error => {
