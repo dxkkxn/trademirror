@@ -19,8 +19,15 @@ const HistorySection = () => {
             return response.json();
         })
         .then(data => {
-            const dict = JSON.parse(data);
-            setHistory(dict);
+          let dict = JSON.parse(data);
+          // limit to 5
+          if (dict.length > 5)
+          {
+            dict = dict.slice(0,5);
+          }
+          console.log('user history :');
+          console.log(dict);
+          setHistory(dict);
         })
         .catch(error => {
             console.error('Error fetching history:', error);
@@ -38,59 +45,38 @@ const HistorySection = () => {
       // polling all relevant data
     }, []);
 
-  try
-  {
     return (
             <CustomCard borderRadius="xl">
                 <Text textStyle="h2" color="black.80">Recent Transactions</Text>
-                  {history == null || history == {} ? (
+                  {history == null || history.length === 0 || !Array.isArray(history) ? (
                     <Button w="full" mt="6" colorScheme="gray">
                         View All
                     </Button>
                 ) : (
                   <Stack>
-                    {history.map((transaction) => (
-                        Object.keys(transaction).map((key) => (
-                              <Flex p="1" key={key} gap="4" w="full">
-   
-                                <Flex justify="space-between" w="full" >
-                                    <Stack >
-                                        <Text textStyle="h6">
-                                            <b>{history[key].time}</b>
-                                        </Text>
-                                        <Text fontSize="sm" color= {history[key].amount.includes('+') ? "green" : "red"}>
-                                            Amount : {history[key].amount}
-                                        </Text>
-                                        <Text textStyle="h6">
-                                            Bitcoin Price : {history[key].btc_price} $
-                                        </Text>
 
-                                    </Stack>
-                                </Flex>
-                                 
-                              </Flex>
-                            )
-                          )
-                        )
-                      )
-                    }
-                    <Button w="full" mt="6" colorScheme="gray">
-                        View All
-                    </Button>
+                  {history.map((transaction, index) => (
+                    <Flex p="1" key={index} gap="4" w="full">
+                    <Flex justify="space-between" w="full">
+                    <Stack>
+                    <Text textStyle="h6" color={transaction.op === 'BUY' ? "green" : "red"}>
+                      {transaction.op === 'BUY' ? ('Bought') : ('Sold')} {transaction.amount} BTC
+                    </Text>
+                    <Text fontSize="sm">
+                    Bitcoin Price: {transaction.btc_price} $
+                    </Text>
+                    </Stack>
+                    </Flex>
+                    </Flex>
+                  ))}
+
+                  <Button w="full" mt="6" colorScheme="gray">
+                  View All
+                  </Button>
                   </Stack>
-              )}
-            </CustomCard>
-        );
-  }
-  catch 
-  {
-    return (
-      <Button w="full" mt="6" colorScheme="gray">
-          View All
-      </Button>
+                )}
+      </CustomCard>
     );
-
-  }
 };
 
 export default HistorySection;
