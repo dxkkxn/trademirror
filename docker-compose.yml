@@ -154,5 +154,8 @@ services:
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      BOOTSTRAP_SERVER: kafka:29092
+      TOPIC_FREQUENT_TRADERS: frequent-traders
     depends_on:
-      - redis
+      kafka:
+        condition: service_healthy
