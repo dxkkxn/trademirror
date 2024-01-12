@@ -156,6 +156,7 @@ services:
       REDIS_PORT: 6379
       BOOTSTRAP_SERVER: kafka:29092
       TOPIC_FREQUENT_TRADERS: frequent-traders
+      TOPIC_TRANSACTIONS: transactions
     depends_on:
       kafka:
         condition: service_healthy
