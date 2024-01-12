@@ -96,7 +96,7 @@ async def get_latest_transactions(response: Response):
 async def get_user_balance(response: Response):
     try:
         user_balance = json.loads(
-            str(redis_db.hget("users:user-balance", "default_user"))
+            str(redis_db.hget("users:balance", "default_user"))
         )
         fiat_balance = user_balance["fiat"]
         bitcoin_balance = user_balance["btc"]
@@ -136,37 +136,41 @@ async def get_user_history(response: Response):
     except:
         raise Exception("Failed at fetching user balance")
 
+
 @app.get("/api/get_following_wallets")
 async def get_following_wallets(response: Response):
     try:
-        wallets = [wallet for wallet in redis_db.smembers("users:tracking:default_user")]
+        wallets = [
+            wallet for wallet in redis_db.smembers("users:tracking:default_user")
+        ]
         response.status_code = status.HTTP_200_OK
 
         return wallets
     except:
         raise Exception("Failed at getting the following wallets for default_user")
 
+
 @app.post("/api/unfollow_wallet")
 async def unfollow_wallet(request: ReplicateWallet, response: Response):
     try:
         redis_db.srem("users:tracking:default_user", request.wallet_id)
-        redis_db.srem(f"wallets:replicate:{request.wallet_id}", "default_user")
+        redis_db.srem(f"wallets:replication:{request.wallet_id}", "default_user")
 
-        message = (
-            f"default_user is not replicating {request.wallet_id}'s transactions anymore"
-        )
+        message = f"default_user is not replicating {request.wallet_id}'s transactions anymore"
 
         response.status_code = status.HTTP_202_ACCEPTED
         return message
     except:
-        raise Exception("Failed at removing wallet from the tracking set of default_user")
+        raise Exception(
+            "Failed at removing wallet from the tracking set of default_user"
+        )
 
 
 @app.post("/api/follow_wallet")
 async def follow_wallet(request: ReplicateWallet, response: Response):
     try:
         redis_db.sadd("users:tracking:default_user", request.wallet_id)
-        redis_db.sadd(f"wallets:replicate:{request.wallet_id}", "default_user")
+        redis_db.sadd(f"wallets:replication:{request.wallet_id}", "default_user")
 
         message = f"default_user is now replicating {request.wallet_id}'s transactions"
 
@@ -181,7 +185,7 @@ async def add_fiat(request: AddFiatRequest, response: Response):
     try:
         if request.amount > 0:
             user_balance = json.loads(
-                str(redis_db.hget("users:user-balance", "default_user"))
+                str(redis_db.hget("users:balance", "default_user"))
             )
             fiat_balance = int(user_balance["fiat"]) + request.amount
             new_balance = json.dumps({"fiat": fiat_balance, "btc": user_balance["btc"]})
@@ -202,7 +206,7 @@ async def withdraw_fiat(request: WithdrawFiatRequest, response: Response):
     try:
         if request.amount > 0:
             user_balance = json.loads(
-                str(redis_db.hget("users:user-balance", "default_user"))
+                str(redis_db.hget("users:balance", "default_user"))
             )
             fiat_balance = int(user_balance["fiat"])
 
@@ -215,7 +219,7 @@ async def withdraw_fiat(request: WithdrawFiatRequest, response: Response):
                     "btc": user_balance["btc"],
                 }
             )
-            redis_db.hset("users:user-balance", "default_user", new_balance)
+            redis_db.hset("users:balance", "default_user", new_balance)
 
             response.status_code = status.HTTP_202_ACCEPTED
             return new_balance
