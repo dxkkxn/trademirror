@@ -23,7 +23,6 @@ services:
     image: restapi_image
     container_name: restapi-service
     build:
-      context: ${PWD}
       dockerfile: ./rest-api/Dockerfile
     environment:
       REDIS_HOST: redis
@@ -38,7 +37,6 @@ services:
     image: frontend_image
     container_name: frontend_container
     build:
-      context: ${PWD}
       dockerfile: ./frontend/Dockerfile.dev
     depends_on:
       - rest-api-service
