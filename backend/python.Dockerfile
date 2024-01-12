@@ -1,4 +1,4 @@
-FROM python:3.11.5
+FROM python:3.11.5-slim
 RUN apt-get update && apt-get upgrade -y
 WORKDIR /app
 COPY ./requirements.txt /app
