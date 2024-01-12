@@ -7,10 +7,10 @@ const Wallets = () => {
   const fetchIntervalVal = 3;
   const [lastTransactions, setLastTransactions] = useState({});
 
-  const [followedList, setFollowedList] = useState([]);
+  // const [followedList, setFollowedList] = useState([]);
 
-  const updateFollowedList = (wallet_hash) => {
-    fetch('/api/followed_wallets')
+  const updateFollowedList = (latest_transactions) => {
+    fetch('/api/get_following_wallets')
     .then( response => {
       if(!response.ok) {
         console.log('followed wallets network error');
@@ -20,21 +20,27 @@ const Wallets = () => {
       return response.json();
     })
     .then(data => {
-      setFollowedList(JSON.parse(data));
+      treatData(latest_transactions, data);
     })
   };
 
-  const treatData = (data) => {
+  const treatData = (latest_transactions, followedList) => {
+    console.log("treatData called with :");
+    console.log(latest_transactions);
+    console.log(followedList);
+    
     // treats data contained in lastTransactionsPublic
-    if(data.length > 5) {
-      data = data.slice(0,5);
+    if(latest_transactions.length > 5) {
+      latest_transactions = latest_transactions.slice(0,5);
     }
     // checks if wallet is followed by default user
     // updateFollowedList();
-    for (const wallet of data) {
-      wallet.followed = followedList.includes(wallet.wallet_hash);
+    for (const wallet of latest_transactions) {
+      wallet.followed = followedList.includes(wallet.wallet);
     }
-    setLastTransactions(data);
+    console.log("data treated : ");
+    console.log(latest_transactions);
+    setLastTransactions(latest_transactions);
   };
 
     // Function to fetch last n transactions
@@ -48,7 +54,7 @@ const Wallets = () => {
         })
         .then(data => {
           const array = JSON.parse(data);
-          treatData(array);
+          updateFollowedList(array);
         })
         .catch(error => {
             console.error('Error fetching transactions:', error);
@@ -86,6 +92,7 @@ const Wallets = () => {
             return response.json();
           }
         })
+        .then(() => updateFollowedList(lastTransactions))
         .catch(error => {
             console.error('Error unfollowing wallet:', error);
         });
@@ -108,6 +115,7 @@ const Wallets = () => {
             return response.json();
           }
         })
+        .then(() => updateFollowedList(lastTransactions))
         .catch(error => {
             console.error('Error following wallets:', error);
         });
@@ -143,7 +151,7 @@ return (
 
 
                                       <Text textStyle="h6">
-                                          Balance : {lastTransactions[key].current_balance} $ (
+                                          Balance : {(parseInt(lastTransactions[key].current_balance, 10)*10**-6).toLocaleString()} BTC (
                                             <span style={{ color: lastTransactions[key].balance_update.includes('+') ? 'green' : 'red' }}>
                                             {parseFloat(lastTransactions[key].balance_update.replace('%', '')).toFixed(2) + '%'}
                                           </span> )
