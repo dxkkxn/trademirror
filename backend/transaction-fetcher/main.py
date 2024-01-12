@@ -7,7 +7,7 @@ import websockets
 import asyncio
 import json
 import os
-from kafka import KafkaConsumer
+from kafka import KafkaConsumer, KafkaProducer
 from enum import Enum
 
 OP = Enum("OP", ["BUY", "SELL"])
@@ -48,11 +48,11 @@ def get_bitcoin_price():
 
 
 bootstrap_server = os.environ.get("BOOTSTRAP_SERVER")
-frequent_traders_topic = os.environ.get("TOPIC_TRANSACTIONS")
-# producer = KafkaProducer(
-#     bootstrap_servers=bootstrap_server,
-#     value_serializer=lambda v: json.dumps(v).encode("utf-8"),
-# )
+topic_transactions = os.environ.get("TOPIC_TRANSACTIONS")
+producer = KafkaProducer(
+    bootstrap_servers=bootstrap_server,
+    value_serializer=lambda v: json.dumps(v).encode("utf-8"),
+)
 
 def compute_tx(op, wallet, tx):
     balance = REDIS_CLIENT.hget(wallet, 'balance')
@@ -84,6 +84,8 @@ def compute_tx(op, wallet, tx):
     REDIS_CLIENT.lpush(wallet+":op", json.dumps(new_op))
     REDIS_CLIENT.hset(wallet, "balance", value)
     print(f"updated wallet {wallet}")
+    producer.send(topic_transactions, value=new_op)
+    print(f"new transaction sent to {topic_transactions}")
     # print(redis_client.hgetall(wallet))
     # print(redis_client.lrange(wallet+":op", 0, -1))
 
@@ -130,13 +132,7 @@ if __name__ == "__main__":
     redis_host = os.environ.get("REDIS_HOST")
     redis_port = os.environ.get("REDIS_PORT")
     REDIS_CLIENT = StrictRedis(host=redis_host, port=redis_port, db=0)
-    # WALLETS = REDIS_CLIENT.lrange("frequent-trading-wallets", 0, -1)
-    # WALLETS = set(w.decode('utf-8') for w in WALLETS)
-    # pubsub = REDIS_CLIENT.pubsub()
-    # pubsub.psubscribe(**{"__keyspace@0__:frequent-trading-wallets": event_handler})
-    # pubsub.run_in_thread(sleep_time=0.01)
     t1 = Thread(target=get_new_wallets)
     t1.start()
-
     loop = asyncio.get_event_loop()
     loop.run_until_complete(main())
