@@ -4,8 +4,9 @@ import { Box, Button, Flex, Grid, HStack, Stack, Text } from '@chakra-ui/react';
 
 const Wallets = () => {
 
-  const fetchIntervalVal = 3;
+  const fetchIntervalVal = 1;
   const [lastTransactions, setLastTransactions] = useState({});
+  const [limit, setLimit] = useState(5);
 
   // const [followedList, setFollowedList] = useState([]);
 
@@ -25,12 +26,9 @@ const Wallets = () => {
   };
 
   const treatData = (latest_transactions, followedList) => {
-    console.log("treatData called with :");
-    console.log(latest_transactions);
-    console.log(followedList);
     
     // treats data contained in lastTransactionsPublic
-    if(latest_transactions.length > 5) {
+    if(latest_transactions.length > limit) {
       latest_transactions = latest_transactions.slice(0,5);
     }
     // checks if wallet is followed by default user
@@ -38,8 +36,6 @@ const Wallets = () => {
     for (const wallet of latest_transactions) {
       wallet.followed = followedList.includes(wallet.wallet);
     }
-    console.log("data treated : ");
-    console.log(latest_transactions);
     setLastTransactions(latest_transactions);
   };
 
@@ -88,7 +84,6 @@ const Wallets = () => {
                 throw new Error('Network response was not ok.');
             }
           else {
-            alert ("Successfully unfollowed wallet");
             return response.json();
           }
         })
@@ -111,7 +106,6 @@ const Wallets = () => {
                 throw new Error('Network response was not ok.');
             }
           else {
-            alert ("Followed successfully wallet");
             return response.json();
           }
         })
@@ -127,8 +121,8 @@ return (
             <CustomCard borderRadius="xl">
                 <Text textStyle="h2" color="black.80">Recent Global Transactions</Text>
                   {Object.keys(lastTransactions).length === 0 ? (
-                    <Button w="full" mt="6" colorScheme="gray">
-                        View All
+                    <Button onClick={()=>setLimit(15 - limit)} w="full" mt="6" colorScheme="gray">
+                      { limit == 5 ? ('View More') : ( 'View Less') }
                     </Button>
                 ) : (
                   <Stack>

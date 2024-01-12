@@ -10,8 +10,26 @@ import {
 
 const PortfolioSection = () => {
 
-  const fetchIntervalVal = 3
+  const fetchIntervalVal = 1
   const [balance, setBalance] = useState({})
+
+  const [BTCPrice, setBCTPrice] = useState(0);
+
+  const fetchBTCPrice = () => {
+    fetch('https://api.blockchain.com/v3/exchange/tickers/BTC-USD')
+    .then( response => {
+       if(!response.ok) {
+       console.log('btc price network error');
+       console.log(response.status);
+         return null;
+       }
+       return response.json();
+    })
+    .then( data => {
+      setBCTPrice(data.last_trade_price);
+    })
+  };
+
 
   const withdraw = () => {
     // display dialog box
@@ -100,8 +118,10 @@ const PortfolioSection = () => {
   useEffect(() => {
     const fetchInterval = setInterval(() => {
       fetchBalance();
+      fetchBTCPrice();
     }, 1000 * fetchIntervalVal);
     fetchBalance();
+    fetchBTCPrice();
     return () => {
       clearInterval(fetchInterval);
     };
@@ -142,19 +162,19 @@ const PortfolioSection = () => {
         xl: "row",
     }}
     >
-    <Stack>
-    <HStack color="black.80">
-    <Text fontSize="sm" fontWeight="medium">Your Wallet Balance</Text>
-    </HStack>
-    {balance == null ? (
-      <Text textStyle="h2" fontWeight="medium"> Internal Server Error </Text>
-    ) : (
       <HStack>
-        <Text textStyle="h2" fontWeight="medium"> {balance.btc} BTC </Text>
-        <Text textStyle="h2" fontWeight="medium"> {balance.fiat} $ </Text>
-      </HStack>
-    )}
-    </Stack>
+        <Stack color="black.80">
+          <Text fontSize="sm" fontWeight="medium">Your Wallet Balance</Text>
+          {balance == null ? (
+          <Text textStyle="h2" fontWeight="medium"> Internal Server Error </Text>
+          ) : (
+          <Stack>
+            <Text textStyle="h2" fontWeight="medium"> {balance.btc} BTC </Text>
+            <Text textStyle="h2" fontWeight="medium"> {balance.fiat} $ </Text>
+          </Stack>
+          )}
+        </Stack>
+    </HStack>
     </HStack>
 
 
@@ -162,6 +182,10 @@ const PortfolioSection = () => {
     <Button leftIcon={<Icon as={AiOutlineArrowDown} />} onClick={()=>deposit()}>Deposit</Button>
     <Button leftIcon={<Icon as={AiOutlineArrowUp} />}onClick = {() => withdraw()} >Withdraw</Button>
     </HStack>
+        <Stack>
+          <Text fontSize="sm" fontWeight="medium"> Current BTC Price </Text>
+          <Text textStyle="h2" fontWeight="medium"> {BTCPrice} $ </Text>
+        </Stack>
     </HStack>
   );
 };
