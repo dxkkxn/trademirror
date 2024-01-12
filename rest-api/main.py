@@ -136,27 +136,54 @@ async def get_user_history(response: Response):
     except:
         raise Exception("Failed at fetching user balance")
 
-
-@app.post("/api/follow_wallet")
-async def follow_wallet(data: ReplicateWallet, response: Response):
+@app.get("/api/get_following_wallets")
+async def get_following_wallets(response: Response):
     try:
-        redis_db.rpush("users:tracking:default_user", data.wallet_id)
-        message = f"default_user is now tracking {data.wallet_id}"
+        wallets = [wallet for wallet in redis_db.smembers("users:tracking:default_user")]
+        response.status_code = status.HTTP_200_OK
+
+        return wallets
+    except:
+        raise Exception("Failed at getting the following wallets for default_user")
+
+@app.post("/api/unfollow_wallet")
+async def unfollow_wallet(request: ReplicateWallet, response: Response):
+    try:
+        redis_db.srem("users:tracking:default_user", request.wallet_id)
+        redis_db.srem(f"wallets:replicate:{request.wallet_id}", "default_user")
+
+        message = (
+            f"default_user is not replicating {request.wallet_id}'s transactions anymore"
+        )
 
         response.status_code = status.HTTP_202_ACCEPTED
         return message
     except:
-        raise Exception("Failed at adding wallet to the tracking list of default_user")
+        raise Exception("Failed at removing wallet from the tracking set of default_user")
+
+
+@app.post("/api/follow_wallet")
+async def follow_wallet(request: ReplicateWallet, response: Response):
+    try:
+        redis_db.sadd("users:tracking:default_user", request.wallet_id)
+        redis_db.sadd(f"wallets:replicate:{request.wallet_id}", "default_user")
+
+        message = f"default_user is now replicating {request.wallet_id}'s transactions"
+
+        response.status_code = status.HTTP_202_ACCEPTED
+        return message
+    except:
+        raise Exception("Failed at adding wallet to the tracking set of default_user")
 
 
 @app.post("/api/add_fiat")
-async def add_fiat(data: AddFiatRequest, response: Response):
+async def add_fiat(request: AddFiatRequest, response: Response):
     try:
-        if data.amount > 0:
+        if request.amount > 0:
             user_balance = json.loads(
                 str(redis_db.hget("users:user-balance", "default_user"))
             )
-            fiat_balance = int(user_balance["fiat"]) + data.amount
+            fiat_balance = int(user_balance["fiat"]) + request.amount
             new_balance = json.dumps({"fiat": fiat_balance, "btc": user_balance["btc"]})
             redis_db.hset("users:user-balance", "default_user", new_balance)
 
@@ -165,22 +192,22 @@ async def add_fiat(data: AddFiatRequest, response: Response):
 
         else:
             response.status_code = status.HTTP_400_BAD_REQUEST
-            return f"Deposit amount is invalid (${data.amount})!"
+            return f"Deposit amount is invalid (${request.amount})!"
     except:
         raise Exception("Failed at adding fiat funds to default_user")
 
 
 @app.post("/api/withdraw_fiat")
-async def withdraw_fiat(data: WithdrawFiatRequest, response: Response):
+async def withdraw_fiat(request: WithdrawFiatRequest, response: Response):
     try:
-        if data.amount > 0:
+        if request.amount > 0:
             user_balance = json.loads(
                 str(redis_db.hget("users:user-balance", "default_user"))
             )
             fiat_balance = int(user_balance["fiat"])
 
-            if fiat_balance >= data.amount:
-                fiat_balance = fiat_balance - data.amount
+            if fiat_balance >= request.amount:
+                fiat_balance = fiat_balance - request.amount
 
             new_balance = json.dumps(
                 {
@@ -195,6 +222,6 @@ async def withdraw_fiat(data: WithdrawFiatRequest, response: Response):
 
         else:
             response.status_code = status.HTTP_400_BAD_REQUEST
-            return f"Withdraw amount is invalid (${data.amount})!"
+            return f"Withdraw amount is invalid (${request.amount})!"
     except:
         raise Exception("Failed at adding fiat funds to default_user")
