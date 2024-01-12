@@ -1,0 +1,47 @@
+version: "3"
+services:
+  balance-fetcher:
+    image: balance-fetcher
+    container_name: bf-container
+    build:
+      context: balance-fetcher
+      dockerfile: ../python.Dockerfile
+    network_mode: host
+  ftd:
+    image: frequent-traders-detector
+    container_name: ftd-container
+    build:
+      context: ftd
+      dockerfile: ../python.Dockerfile
+    network_mode: host
+  transaction-fetcher:
+    image: transaction-fetcher
+    container_name: tf-container
+    build:
+      context: transaction-fetcher
+      dockerfile: ../python.Dockerfile
+    network_mode: host
+  scoring:
+    image: scoring
+    container_name: scoring-container
+    build:
+      context: scoring
+      dockerfile: ../python.Dockerfile
+    network_mode: host
+  redis:
+    image: redis
+    container_name: redis-container
+    volumes:
+        - ./redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    network_mode: host
+
+  rediscommander:
+    image: rediscommander/redis-commander
+    container_name: redis-commander-container
+    restart: always
+    environment:
+      - REDIS_HOSTS=local:localhost:6379
+    network_mode: host
+    # ports:
+    #   - 8081:8081

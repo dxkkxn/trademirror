@@ -2,78 +2,67 @@ version: "3"
 services:
   # ------- DATABASE ----------
   redis:
-    image: ${REDIS_IMAGE}
-    container_name: ${REDIS_CONTAINER}
+    image: redis
+    container_name: redis-container
+    volumes:
+        - ./backend/redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
     ports:
-      - ${REDIS_PORT}:6379
-    networks:
-      - trade-mirror-network
+      - 6379:6379
+
   rediscommander:
-    image: ${REDIS_COMMANDER_IMAGE}
-    container_name: ${REDIS_COMMANDER_CONTAINER}
+    image: rediscommander/redis-commander
+    container_name: redis-commander-container
     restart: always
     environment:
       - REDIS_HOSTS=local:redis:6379
     ports:
-      - ${REDIS_COMMANDER_PORT}:8081
-    networks:
-      - trade-mirror-network
-  # -------------------------------
-  # ---------BACKEND --------------
+      - 8081:8081
+
   rest-api-service:
-    image: ${RESTAPI_IMAGE}
-    container_name: ${RESTAPI_CONTAINER}
+    image: restapi_image
+    container_name: restapi-service
     build:
-      context: ${PWD}
       dockerfile: ./rest-api/Dockerfile
-    env_file:
-      - ./rest-api/.env
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DATABASE: 0
     depends_on:
       - redis
     ports:
-      - ${RESTAPI_PORT}:8000
-    networks:
-      - trade-mirror-network
-  # -------------------------------
-  # ---------- FRONTEND -----------
+      - 8000:8000
+
   frontend:
-    image: ${FRONTEND_IMAGE}
-    container_name: ${FRONTEND_CONTAINER}
+    image: frontend_image
+    container_name: frontend_container
     build:
-      context: ${PWD}
       dockerfile: ./frontend/Dockerfile.dev
     depends_on:
       - rest-api-service
     ports:
-      - ${FRONTEND_PORT}:4500
-    networks:
-      - trade-mirror-network
-  #---------------------------------
-  # ----------NGINX----------------
+      - 80:4500
+
   nginx:
     image: nginx:latest
-    container_name: "nginx-container"
+    container_name: nginx-container
     ports:
-      - "4321:4321"
+      - 4321:4321
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - frontend
       - rest-api-service
-    networks:
-      - trade-mirror-network
-  # --------------------------------
-  # ------------KAFKA---------------
+
   zookeeper:
-    image: ${ZOOKEEPER_IMAGE}
-    container_name: ${ZOOKEEPER_CONTAINER}
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper_container
     ports:
-      - ${ZOOKEEPER_PORT}:2181
+      - 2181:2181
     environment:
-      ZOOKEEPER_CLIENT_PORT: ${ZOOKEEPER_PORT}
+      ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
-    networks:
-      - trade-mirror-network
+
   kafka:
     # "`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-
     # An important note about accessing Kafka from clients on other machines:
@@ -92,10 +81,10 @@ services:
     # See https://rmoff.net/2018/08/02/kafka-listeners-explained/ for details
     # "`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-
     #
-    image: ${KAFKA_IMAGE}
-    container_name: ${KAFKA_CONTAINER}
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka_container
     ports:
-      - ${KAFKA_PORT}:9092
+      - 9092:9092
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
@@ -115,47 +104,55 @@ services:
       interval: 10s
       retries: 5
       timeout: 5s
-    networks:
-      - trade-mirror-network
+
   ftd:
-    image: ${FTD_IMAGE}
-    container_name: ${FTD_CONTAINER}
+    image: frequent-traders-detector
+    container_name: ftd-container
     build:
-      context: ${PWD}
-      dockerfile: ./frequent-traders-detector/ftd/Dockerfile
-    env_file:
-      - ./frequent-traders-detector/ftd/.env.test
+      context: backend/ftd
+      dockerfile: ../python.Dockerfile
+    environment:
+      BOOTSTRAP_SERVER: kafka:29092
+      TOPIC_FREQUENT_TRADERS: frequent-traders
     depends_on:
       kafka:
         condition: service_healthy
-    networks:
-      - trade-mirror-network
-  database_driver:
-    image: ${DATABASE_DRIVER_IMAGE}
-    container_name: ${DATABASE_DRIVER_CONTAINER}
+
+  balance-fetcher:
+    image: balance-fetcher
+    container_name: bf-container
     build:
-      context: ${PWD}
-      dockerfile: ./frequent-traders-detector/database-driver/Dockerfile
-    env_file:
-      - ./frequent-traders-detector/database-driver/.env.test
-    depends_on:
-      - ftd
-    networks:
-      - trade-mirror-network
-  transaction-fetcher:
-    image: "transaction_fetcher_image"
-    container_name: "transaction-fetcher-container"
-    build:
-      context: ${PWD}
-      dockerfile: ./transaction-fetcher/Dockerfile
+      context: backend/balance-fetcher
+      dockerfile: ../python.Dockerfile
     environment:
-      REDIS_HOST: "redis"
-      REDIS_PORT: "6379"
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      BOOTSTRAP_SERVER: kafka:29092
+      TOPIC_FREQUENT_TRADERS: frequent-traders
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  scoring:
+    image: scoring
+    container_name: scoring-container
+    build:
+      context: backend/scoring
+      dockerfile: ../python.Dockerfile
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     depends_on:
       - redis
-    networks:
-      - trade-mirror-network
-    
-networks:
-  trade-mirror-network:
-    driver: bridge
+
+  transaction-fetcher:
+    image: transaction-fetcher
+    container_name: tf-container
+    build:
+      context: backend/transaction-fetcher
+      dockerfile: ../python.Dockerfile
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      - redis

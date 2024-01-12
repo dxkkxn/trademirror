@@ -4,7 +4,6 @@ import asyncio
 import websockets
 import json
 import time
-import requests
 from collections import defaultdict
 from kafka import KafkaProducer
 import os
@@ -20,50 +19,21 @@ class TradersDetector:
         self.sent_traders = set()  # wallets that have been already sent to DB
         self.frequent_traders = set()  # mapping wallet of frequent traders to
         # sent or not sent (kafka)
-
-        # ----- yousseff--------
-
-        # self.producer = KafkaProducer(
-        #     bootstrap_servers="localhost:9092",
-        #     value_serializer=lambda v: json.dumps(v).encode("utf-8"),
-        # )
-
-        # -----------------------
-
-        # ------ k8s -----------
-        boostrap_server = os.environ.get("BOOSTRAP_SERVER")
-        print(boostrap_server)
+        bootstrap_server = os.environ.get("BOOTSTRAP_SERVER")
 
         self.producer = KafkaProducer(
-            bootstrap_servers=boostrap_server,
+            bootstrap_servers=bootstrap_server,
             value_serializer=lambda v: json.dumps(v).encode("utf-8"),
         )
         # - ---------------------
-
-    def getBalance(self, wallet):
-        """
-        Returns the total btc in the account
-        """
-        url = "https://blockchain.info/balance?active=" + wallet
-        data = requests.get(url).json()
-        return data[wallet]["final_balance"]  # unit satoshi
 
     def kafka_send_frequent_traders(self):
         """
         sends through kafka the frequent traders
         """
+        topic_frequent_traders = os.environ.get("TOPIC_FREQUENT_TRADERS")
         for addr in self.frequent_traders:
-            balance = self.getBalance(addr)
-            obj = {"addr": addr, "balance": balance}
-            # --------- youssef ----------
-            # self.producer.send("frequent-traders", value=obj)
-            # ----------------------------
-
-            # ---------- k8s -------------
-            topic_frequent_traders = os.environ.get("TOPIC_FREQUENT_TRADERS")
-            print(obj)
-            self.producer.send(topic_frequent_traders, value=obj)
-            # -----------------------------
+            self.producer.send(topic_frequent_traders, value=addr)
         self.sent_traders |= self.frequent_traders
         print(f"sent_traders{self.sent_traders}")
         self.frequent_traders.clear()
