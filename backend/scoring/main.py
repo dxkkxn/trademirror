@@ -33,6 +33,8 @@ def compute_score(wallet):
                 continue;
             if last_buy_price < sell_price:
                 score += 1
+            if last_buy_price > sell_price:
+                score += 1
     REDIS_CLIENT.hset(wallet, "score", score)
 
 
