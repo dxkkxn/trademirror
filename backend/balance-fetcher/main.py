@@ -23,6 +23,7 @@ def main():
     consumer = KafkaConsumer(
         frequent_traders_topic,
         bootstrap_servers=bootstrap_server,
+        group_id="balance-fetcher",
         value_deserializer=lambda x: json.loads(x.decode("utf-8"))
     )
     print("Initialized succesfully")
