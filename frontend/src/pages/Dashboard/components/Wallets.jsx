@@ -4,8 +4,38 @@ import { Box, Button, Flex, Grid, HStack, Stack, Text } from '@chakra-ui/react';
 
 const Wallets = () => {
 
-  const fetchIntervalVal = 3
-    const [lastTransactions, setLastTransactions] = useState({})
+  const fetchIntervalVal = 3;
+  const [lastTransactions, setLastTransactions] = useState({});
+
+  const [followedList, setFollowedList] = useState([]);
+
+  const updateFollowedList = (wallet_hash) => {
+    fetch('/api/followed_wallets')
+    .then( response => {
+      if(!response.ok) {
+        console.log('followed wallets network error');
+        console.log(response.status);
+        return [];
+      }
+      return response.json();
+    })
+    .then(data => {
+      setFollowedList(JSON.parse(data));
+    })
+  };
+
+  const treatData = (data) => {
+    // treats data contained in lastTransactionsPublic
+    if(data.length > 5) {
+      data = data.slice(0,5);
+    }
+    // checks if wallet is followed by default user
+    // updateFollowedList();
+    for (const wallet of data) {
+      wallet.followed = followedList.includes(wallet.wallet_hash);
+    }
+    setLastTransactions(data);
+  };
 
     // Function to fetch last n transactions
     const fetchTransactions = () => {
@@ -17,11 +47,8 @@ const Wallets = () => {
             return response.json();
         })
         .then(data => {
-          let dict = JSON.parse(data);
-          if(dict.length > 5) {
-            dict = dict.slice(0,5);
-          }
-          setLastTransactions(dict);
+          const array = JSON.parse(data);
+          treatData(array);
         })
         .catch(error => {
             console.error('Error fetching transactions:', error);
@@ -41,19 +68,36 @@ const Wallets = () => {
       // polling all relevant data
     }, []);
 
-  const treatData = () => {
-    // treats data contained in lastTransactionsPublic
-  };
+
+  const unfollow = (wallet_hash) => {
+    fetch('/api/unfollow_wallet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({"wallet_id": wallet_hash}),
+      })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok.');
+            }
+          else {
+            alert ("Successfully unfollowed wallet");
+            return response.json();
+          }
+        })
+        .catch(error => {
+            console.error('Error unfollowing wallet:', error);
+        });
+    }
 
   const follow = (wallet_hash) => {
-    console.log("Called follow");
-    console.log(wallet_hash);
     fetch('/api/follow_wallet', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({wallet_hash: wallet_hash}),
+        body: JSON.stringify({"wallet_id": wallet_hash}),
       })
         .then(response => {
             if (!response.ok) {
@@ -88,9 +132,15 @@ return (
                                       <Text textStyle="h6">
                                           <b>{lastTransactions[key].wallet}</b>
                                       </Text>
-                                      <Button onClick={()=>follow(lastTransactions[key].wallet)} w="full" mt="6" colorScheme="green">
-                                        Follow
-                                      </Button>
+                                      {lastTransactions[key].followed === false ? (
+                                        <Button onClick={()=>follow(lastTransactions[key].wallet)} w="full" mt="6" colorScheme="green">
+                                          Follow
+                                        </Button> ) :
+                                        ( 
+                                        <Button onClick={()=>unfollow(lastTransactions[key].wallet)} w="full" mt="6" colorScheme="red">
+                                          Unfollow
+                                        </Button> )}
+
 
                                       <Text textStyle="h6">
                                           Balance : {lastTransactions[key].current_balance} $ (

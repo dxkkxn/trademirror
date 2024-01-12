@@ -13,6 +13,72 @@ const PortfolioSection = () => {
   const fetchIntervalVal = 3
   const [balance, setBalance] = useState({})
 
+  const withdraw = () => {
+    // display dialog box
+    let amount = prompt("Enter an amount : ");
+    if (amount === null || isNaN(amount) || amount > balance.fiat) {
+        alert("Invalid input. Please enter a valid integer lesser than your balance.");
+        return null; // or you can return a default value or handle it as needed
+    }
+
+    // Parse the input as an integer
+    const withdrawValue = parseInt(amount, 10);
+
+    // posting to api
+    fetch('/api/withdraw_fiat', {
+      method: 'POST',
+      headers: {
+       'Content-Type': 'application/json',
+      },
+        body: JSON.stringify({"amount": withdrawValue}),
+      })
+      .then(response => {
+         if (!response.ok) {
+           throw new Error('Network response was not ok.');
+         }
+         else {
+           return response.json();
+         }
+      })
+      .catch(error => {
+        console.error("Error withdrawing fiat");
+      });
+  }
+
+
+  const deposit = () => {
+    // display dialog box
+    let amount = prompt("Enter an amount : ");
+    if (amount === null || isNaN(amount)) {
+        alert("Invalid input. Please enter a valid integer.");
+        return null; // or you can return a default value or handle it as needed
+    }
+
+    // Parse the input as an integer
+    const depositValue = parseInt(amount, 10);
+
+    // posting to api
+    fetch('/api/add_fiat', {
+      method: 'POST',
+      headers: {
+       'Content-Type': 'application/json',
+      },
+        body: JSON.stringify({"amount": depositValue}),
+      })
+      .then(response => {
+         if (!response.ok) {
+           throw new Error('Network response was not ok.');
+         }
+         else {
+           return response.json();
+         }
+      })
+      .catch(error => {
+        console.error("Error depositing fiat");
+      });
+  }
+
+
   // Function to fetch last n transactions
   const fetchBalance = () => {
     fetch('/api/user_balance')
@@ -93,8 +159,8 @@ const PortfolioSection = () => {
 
 
     <HStack pr="6">
-    <Button leftIcon={<Icon as={AiOutlineArrowDown} />}>Deposit</Button>
-    <Button leftIcon={<Icon as={AiOutlineArrowUp} />}>Withdraw</Button>
+    <Button leftIcon={<Icon as={AiOutlineArrowDown} />} onClick={()=>deposit()}>Deposit</Button>
+    <Button leftIcon={<Icon as={AiOutlineArrowUp} />}onClick = {() => withdraw()} >Withdraw</Button>
     </HStack>
     </HStack>
   );
