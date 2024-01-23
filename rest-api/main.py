@@ -28,23 +28,8 @@ redis_db = None
 @app.on_event("startup")
 async def startup_event():
     global redis_db
-    # global wallets_to_replicate
-    # global pubsub
-
     redis_db = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
 
-    redis_db.sadd("wallets:replication:wallet", "default_user")
-
-    redis_db.sadd("users:tracking:default_user", "some-wallet_s-hash")
-
-    if not redis_db.exists("users:balance"):
-        redis_db.hset("users:balance", "default_user", '{"fiat": 100, "btc": 1}')
-
-    if not redis_db.exists("users:transactions:default_user"):
-        redis_db.rpush(
-            "users:transactions:default_user",
-            '{"op": "BUY", "btc_price": 1000000, "current_balance": 101, "value": 1}',
-        )
 
 # allowing cors
 app.add_middleware(
@@ -210,7 +195,7 @@ async def add_fiat(request: AddFiatRequest, response: Response):
             )
             fiat_balance = int(user_balance["fiat"]) + request.amount
             new_balance = json.dumps({"fiat": fiat_balance, "btc": user_balance["btc"]})
-            redis_db.hset("users:user-balance", "default_user", new_balance)
+            redis_db.hset("users:balance", "default_user", new_balance)
 
             response.status_code = status.HTTP_202_ACCEPTED
             return new_balance

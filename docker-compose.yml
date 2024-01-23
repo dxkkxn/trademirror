@@ -6,9 +6,11 @@ services:
     container_name: redis-container
     volumes:
         - ./backend/redis.conf:/usr/local/etc/redis/redis.conf
-    command: redis-server /usr/local/etc/redis/redis.conf
+        - ./backend/dump.rdb:/usr/local/etc/redis/dump.rdb
+    command: redis-server /usr/local/etc/redis/redis.conf;
     ports:
       - 6379:6379
+    restart: always
 
   rediscommander:
     image: rediscommander/redis-commander
