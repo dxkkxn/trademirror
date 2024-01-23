@@ -162,3 +162,18 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
+
+  copy-trading:
+    image: copy-trading
+    container_name: copy-trading-container
+    build:
+      context: backend/copy-trading
+      dockerfile: ../python.Dockerfile
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      BOOTSTRAP_SERVER: kafka:29092
+      TOPIC_TRANSACTIONS: transactions
+    depends_on:
+      kafka:
+        condition: service_healthy
