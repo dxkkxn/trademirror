@@ -36,7 +36,6 @@ def main():
         value_deserializer=lambda x: json.loads(x.decode("utf-8"))
     )
 
-    REDIS_CLIENT.hset("users:balance", "default_user", '{"fiat": 100, "btc": 1}')
     user_balance = json.loads(REDIS_CLIENT.hget("users:balance", "default_user"))
     print(user_balance, type(user_balance))
     USER_BALANCE["fiat"] = user_balance["fiat"]
@@ -44,7 +43,7 @@ def main():
     print("Initialized succesfully")
     for msg in consumer:
         transaction = msg.value
-        print(f"tx received {transaction}")
+        # print(f"tx received {transaction}")
         if transaction['wallet'] not in USER_WALLETS:
             continue
         print(f"tx received {transaction}")
@@ -54,6 +53,7 @@ def main():
             continue
         percentage = transaction["value"] / transaction["current_balance"]
 
+        print(f"percentage: {percentage}")
 
         if transaction["op"] == "BUY":
             value_to_buy = USER_BALANCE["fiat"] * percentage
