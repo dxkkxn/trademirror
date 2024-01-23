@@ -84,6 +84,7 @@ def compute_tx(op, wallet, tx):
     REDIS_CLIENT.lpush(wallet+":op", json.dumps(new_op))
     REDIS_CLIENT.hset(wallet, "balance", value)
     print(f"updated wallet {wallet}")
+    new_op["wallet"] = wallet
     producer.send(topic_transactions, value=new_op)
     print(f"new transaction sent to {topic_transactions}")
     # print(redis_client.hgetall(wallet))
