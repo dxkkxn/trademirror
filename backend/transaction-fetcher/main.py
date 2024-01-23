@@ -61,6 +61,7 @@ def compute_tx(op, wallet, tx):
     current_balance = int(balance.decode('utf-8'))
     btc_price = get_bitcoin_price() # in usd
     value = 0
+
     if op == OP.SELL:
         tx = get_tx_input(tx["x"]["inputs"], wallet)
         new_op = {
@@ -80,6 +81,9 @@ def compute_tx(op, wallet, tx):
             "value": tx["value"],
         }
         value = current_balance+tx['value'];
+
+    if tx["value"] <= 0 or current_balance <= 0 or value <= 0:
+        return;
 
     REDIS_CLIENT.lpush(wallet+":op", json.dumps(new_op))
     REDIS_CLIENT.hset(wallet, "balance", value)
