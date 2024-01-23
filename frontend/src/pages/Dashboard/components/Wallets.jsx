@@ -4,8 +4,40 @@ import { Box, Button, Flex, Grid, HStack, Stack, Text } from '@chakra-ui/react';
 
 const Wallets = () => {
 
-  const fetchIntervalVal = 3
-    const [lastTransactions, setLastTransactions] = useState({})
+  const fetchIntervalVal = 1;
+  const [lastTransactions, setLastTransactions] = useState({});
+  const [limit, setLimit] = useState(5);
+
+  // const [followedList, setFollowedList] = useState([]);
+
+  const updateFollowedList = (latest_transactions) => {
+    fetch('/api/get_following_wallets')
+    .then( response => {
+      if(!response.ok) {
+        console.log('followed wallets network error');
+        console.log(response.status);
+        return [];
+      }
+      return response.json();
+    })
+    .then(data => {
+      treatData(latest_transactions, data);
+    })
+  };
+
+  const treatData = (latest_transactions, followedList) => {
+    
+    // treats data contained in lastTransactionsPublic
+    if(latest_transactions.length > limit) {
+      latest_transactions = latest_transactions.slice(0,5);
+    }
+    // checks if wallet is followed by default user
+    // updateFollowedList();
+    for (const wallet of latest_transactions) {
+      wallet.followed = followedList.includes(wallet.wallet);
+    }
+    setLastTransactions(latest_transactions);
+  };
 
     // Function to fetch last n transactions
     const fetchTransactions = () => {
@@ -17,11 +49,8 @@ const Wallets = () => {
             return response.json();
         })
         .then(data => {
-          let dict = JSON.parse(data);
-          if(dict.length > 5) {
-            dict = dict.slice(0,5);
-          }
-          setLastTransactions(dict);
+          const array = JSON.parse(data);
+          updateFollowedList(array);
         })
         .catch(error => {
             console.error('Error fetching transactions:', error);
@@ -41,29 +70,46 @@ const Wallets = () => {
       // polling all relevant data
     }, []);
 
-  const treatData = () => {
-    // treats data contained in lastTransactionsPublic
-  };
 
-  const follow = (wallet_hash) => {
-    console.log("Called follow");
-    console.log(wallet_hash);
-    fetch('/api/follow_wallet', {
+  const unfollow = (wallet_hash) => {
+    fetch('/api/unfollow_wallet', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({wallet_hash: wallet_hash}),
+        body: JSON.stringify({"wallet_id": wallet_hash}),
       })
         .then(response => {
             if (!response.ok) {
                 throw new Error('Network response was not ok.');
             }
           else {
-            alert ("Followed successfully wallet");
             return response.json();
           }
         })
+        .then(() => updateFollowedList(lastTransactions))
+        .catch(error => {
+            console.error('Error unfollowing wallet:', error);
+        });
+    }
+
+  const follow = (wallet_hash) => {
+    fetch('/api/follow_wallet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({"wallet_id": wallet_hash}),
+      })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok.');
+            }
+          else {
+            return response.json();
+          }
+        })
+        .then(() => updateFollowedList(lastTransactions))
         .catch(error => {
             console.error('Error following wallets:', error);
         });
@@ -75,8 +121,8 @@ return (
             <CustomCard borderRadius="xl">
                 <Text textStyle="h2" color="black.80">Recent Global Transactions</Text>
                   {Object.keys(lastTransactions).length === 0 ? (
-                    <Button w="full" mt="6" colorScheme="gray">
-                        View All
+                    <Button onClick={()=>setLimit(15 - limit)} w="full" mt="6" colorScheme="gray">
+                      { limit == 5 ? ('View More') : ( 'View Less') }
                     </Button>
                 ) : (
                   <Stack>
@@ -88,12 +134,18 @@ return (
                                       <Text textStyle="h6">
                                           <b>{lastTransactions[key].wallet}</b>
                                       </Text>
-                                      <Button onClick={()=>follow(lastTransactions[key].wallet)} w="full" mt="6" colorScheme="green">
-                                        Follow
-                                      </Button>
+                                      {lastTransactions[key].followed === false ? (
+                                        <Button onClick={()=>follow(lastTransactions[key].wallet)} w="full" mt="6" colorScheme="green">
+                                          Follow
+                                        </Button> ) :
+                                        ( 
+                                        <Button onClick={()=>unfollow(lastTransactions[key].wallet)} w="full" mt="6" colorScheme="red">
+                                          Unfollow
+                                        </Button> )}
+
 
                                       <Text textStyle="h6">
-                                          Balance : {lastTransactions[key].current_balance} $ (
+                                          Balance : {(parseInt(lastTransactions[key].current_balance, 10)*10**-6).toLocaleString()} BTC (
                                             <span style={{ color: lastTransactions[key].balance_update.includes('+') ? 'green' : 'red' }}>
                                             {parseFloat(lastTransactions[key].balance_update.replace('%', '')).toFixed(2) + '%'}
                                           </span> )
