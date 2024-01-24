@@ -16,7 +16,7 @@ const PortfolioSection = () => {
   const [BTCPrice, setBCTPrice] = useState(0);
 
   const fetchBTCPrice = () => {
-    fetch('https://api.blockchain.com/v3/exchange/tickers/BTC-USD')
+    fetch('https://blockchain.info/ticker')
     .then( response => {
        if(!response.ok) {
        console.log('btc price network error');
@@ -26,7 +26,7 @@ const PortfolioSection = () => {
        return response.json();
     })
     .then( data => {
-      setBCTPrice(data.last_trade_price);
+      setBCTPrice(data.USD.last);
     })
   };
 
