@@ -25,6 +25,7 @@ class WithdrawFiatRequest(BaseModel):
 app = FastAPI()
 redis_db = None
 
+
 @app.on_event("startup")
 async def startup_event():
     global redis_db
@@ -59,10 +60,17 @@ async def get_redis_status():
 @app.get("/api/latest_transactions")
 async def get_latest_transactions(response: Response):
     try:
-        ftw = redis_db.lrange("frequent-trading-wallets", 0, 10)
+        ftw = redis_db.lrange("frequent-trading-wallets", 0, -1)
+        scores = []
+        for w in ftw:
+            w = str(w)
+            if redis_db.hexists(w, "score"):
+                scores.append((float(str(redis_db.hget(w, "score"))), w))
+        scores.sort(reverse=True)
+        scores = scores[:10]
         transactions = []
-        for wallet in ftw:
-            last_transactions = redis_db.lrange(wallet + ":op", 0, -1)
+        for score, wallet in scores:
+            last_transactions = redis_db.lrange(wallet + ":op", -1, -1)
             for tx in last_transactions:
                 transaction = json.loads(tx)
                 current_balance = int(str(redis_db.hget(wallet, "balance")))
@@ -84,6 +92,7 @@ async def get_latest_transactions(response: Response):
                 transactions.append(
                     {
                         "wallet": wallet,
+                        "score": score,
                         "current_balance": current_balance,
                         "balance_update": ("+" if update_percentage >= 0 else "")
                         + str(update_percentage * 100)
@@ -101,9 +110,7 @@ async def get_latest_transactions(response: Response):
 @app.get("/api/user_balance")
 async def get_user_balance(response: Response):
     try:
-        user_balance = json.loads(
-            str(redis_db.hget("users:balance", "default_user"))
-        )
+        user_balance = json.loads(str(redis_db.hget("users:balance", "default_user")))
         fiat_balance = user_balance["fiat"]
         bitcoin_balance = user_balance["btc"]
 
