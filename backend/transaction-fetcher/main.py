@@ -55,10 +55,7 @@ producer = KafkaProducer(
 )
 
 def compute_tx(op, wallet, tx):
-    balance = REDIS_CLIENT.hget(wallet, 'balance')
-    while not balance: # this can happen bc tf is faster than insertion
-        balance = REDIS_CLIENT.hget(wallet, 'balance')
-    current_balance = int(balance.decode('utf-8'))
+    current_balance = int(REDIS_CLIENT.hget(wallet, 'balance'))
     btc_price = get_bitcoin_price() # in usd
     value = 0
 
@@ -118,26 +115,22 @@ async def main():
 
 
 
-def get_new_wallets():
-    bootstrap_server = os.environ.get("BOOTSTRAP_SERVER")
-    frequent_traders_topic = os.environ.get("TOPIC_FREQUENT_TRADERS")
-    consumer = KafkaConsumer(
-        frequent_traders_topic,
-        bootstrap_servers=bootstrap_server,
-        group_id="transaction-fetcher",
-        value_deserializer=lambda x: json.loads(x.decode("utf-8"))
-    )
-    for msg in consumer:
-        print(f"new wallet received {msg.value}")
-        WALLETS.append(msg.value)
-
+def event_handler(msg):
+    global WALLETS
+    wallets = REDIS_CLIENT.lrange("frequent-trading-wallets", 0, -1)
+    WALLETS = set(wallets)
+    print(f"tracking {len(WALLETS)} wallets")
 
 
 if __name__ == "__main__":
     redis_host = os.environ.get("REDIS_HOST")
     redis_port = os.environ.get("REDIS_PORT")
-    REDIS_CLIENT = StrictRedis(host=redis_host, port=redis_port, db=0)
-    t1 = Thread(target=get_new_wallets)
-    t1.start()
+    REDIS_CLIENT = StrictRedis(host=redis_host, port=redis_port, db=0,
+                               decode_responses=True)
+    WALLETS = set(REDIS_CLIENT.lrange("frequent-trading-wallets", 0, -1))
+    pubsub = REDIS_CLIENT.pubsub()
+    pubsub.psubscribe(**{"__keyspace@0__:frequent-trading-wallets": event_handler})
+    pubsub.run_in_thread(sleep_time=0.01)
+
     loop = asyncio.get_event_loop()
     loop.run_until_complete(main())
