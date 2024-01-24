@@ -26,6 +26,7 @@ services:
     container_name: restapi-service
     build:
       dockerfile: ./rest-api/Dockerfile
+      context: ${PWD}
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -40,6 +41,7 @@ services:
     container_name: frontend_container
     build:
       dockerfile: ./frontend/Dockerfile.dev
+      context: ${PWD}
     depends_on:
       - rest-api-service
     ports:
