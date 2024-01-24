@@ -164,13 +164,14 @@ const PortfolioSection = () => {
     >
       <HStack>
         <Stack color="black.80">
-          <Text fontSize="sm" fontWeight="medium">Your Wallet Balance</Text>
+          <Text fontSize="sm" fontWeight="medium">Your Wallet</Text>
           {balance == null ? (
           <Text textStyle="h2" fontWeight="medium"> Internal Server Error </Text>
           ) : (
           <Stack>
-            <Text textStyle="h2" fontWeight="medium"> {balance.btc} BTC </Text>
-            <Text textStyle="h2" fontWeight="medium"> {balance.fiat} $ </Text>
+            <Text textStyle="h2" fontWeight="medium"> Bitcoin balance : {balance.btc} BTC </Text>
+            <Text textStyle="h2" fontWeight="medium"> Fiat balance : {balance.fiat} $ </Text>
+            <Text textStyle="h2" fontWeight="medium"> Total balance : {balance.fiat + balance.btc * BTCPrice} $ </Text>
           </Stack>
           )}
         </Stack>
