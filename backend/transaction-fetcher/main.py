@@ -43,8 +43,8 @@ def get_tx_output(tx_l, wallet):
 
 
 def get_bitcoin_price():
-    res = requests.get("https://api.blockchain.com/v3/exchange/tickers/BTC-USD").json()
-    return res["last_trade_price"]
+    res = requests.get("https://blockchain.info/ticker").json()
+    return res['USD']['last']
 
 
 bootstrap_server = os.environ.get("BOOTSTRAP_SERVER")
