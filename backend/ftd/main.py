@@ -110,8 +110,8 @@ class TradersDetector:
 
 
 if __name__ == "__main__":
-    time_limit = 60
-    tptl = 3  # transaction per time limit
+    time_limit = os.environ.get("TIME_LIMIT_SECS")
+    tptl = os.environ.get("NUMBER_OF_TRANSACTIONS")
     app = TradersDetector(time_limit, tptl)
     loop = asyncio.get_event_loop()
     loop.run_until_complete(app.main())

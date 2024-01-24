@@ -118,6 +118,8 @@ services:
     environment:
       BOOTSTRAP_SERVER: kafka:29092
       TOPIC_FREQUENT_TRADERS: frequent-traders
+      TIME_LIMIT_SECS: 10
+      NUMBER_OF_TRANSACTIONS: 1
     depends_on:
       kafka:
         condition: service_healthy
