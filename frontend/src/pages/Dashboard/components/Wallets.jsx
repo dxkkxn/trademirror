@@ -2,13 +2,13 @@ import React , { useState, useEffect } from 'react';
 import { CustomCard } from '../../../chakra/CustomCard';
 import { Box, Button, Flex, Grid, HStack, Stack, Text } from '@chakra-ui/react';
 
-const Wallets = () => {
+const Wallets = ({ onUpdate }) => {
 
   const fetchIntervalVal = 1;
   const [lastTransactions, setLastTransactions] = useState({});
   const [limit, setLimit] = useState(5);
 
-  // const [followedList, setFollowedList] = useState([]);
+  const [followedList, setFollowedList] = useState([]);
 
   const updateFollowedList = (latest_transactions) => {
     fetch('/api/get_following_wallets')
@@ -25,7 +25,10 @@ const Wallets = () => {
     })
   };
 
-  const treatData = (latest_transactions, followedList) => {
+  const treatData = (latest_transactions, data) => {
+
+    setFollowedList(data);
+    onUpdate(data);
     
     // treats data contained in lastTransactionsPublic
     if(latest_transactions.length > limit) {
@@ -34,7 +37,7 @@ const Wallets = () => {
     // checks if wallet is followed by default user
     // updateFollowedList();
     for (const wallet of latest_transactions) {
-      wallet.followed = followedList.includes(wallet.wallet);
+      wallet.followed = data.includes(wallet.wallet);
     }
     setLastTransactions(latest_transactions);
   };

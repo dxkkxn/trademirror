@@ -1,11 +1,19 @@
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 import TopNav from '../../components/TopNav';
 import { Box, Flex, Grid, GridItem } from '@chakra-ui/react';
 import Portfoliosection from './components/PortfolioSection';
 import HistorySection from './components/HistorySection';
 import Wallets from './components/Wallets';
+import Following from './components/Following.jsx';
 
 const Dashboard = () => {
+
+  const [followedList, setFollowedList] = useState([]);
+
+  const handleChildUpdate = (newValue) => {
+    setFollowedList(newValue);
+  }
+
   return (
     <div>
         <Flex>
@@ -22,11 +30,14 @@ const Dashboard = () => {
         
            
     
-        <GridItem colSpan={1}>
+        <GridItem colSpan={2}>
           <HistorySection />
         </GridItem>
-        <GridItem colSpan={1}>
-          <Wallets />
+        <GridItem colSpan={2}>
+          <Wallets onUpdate = {handleChildUpdate}/>
+        </GridItem>
+        <GridItem colSpan={2}>
+          <Following followedList={followedList} />
         </GridItem>
         
         </Grid>
