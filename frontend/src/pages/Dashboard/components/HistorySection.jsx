@@ -58,7 +58,7 @@ const HistorySection = () => {
                     <Flex justify="space-between" w="full">
                     <Stack>
                     <Text textStyle="h6" color={transaction.op === 'BUY' ? "green" : "red"}>
-                      {transaction.op === 'BUY' ? ('Bought') : ('Sold')} {transaction.amount} BTC
+                      {transaction.op === 'BUY' ? ('Bought') : ('Sold')} {transaction.amount * 10**(-6)} BTC
                     </Text>
                     <Text fontSize="sm">
                     Bitcoin Price: {transaction.btc_price} $
