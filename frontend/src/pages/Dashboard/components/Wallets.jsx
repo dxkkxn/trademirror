@@ -148,7 +148,7 @@ return (
 
 
                                       <Text textStyle="h6">
-                                          Balance : {(parseInt(lastTransactions[key].current_balance, 10)*10**-6).toLocaleString()} BTC (
+                                          Balance : {(parseInt(lastTransactions[key].current_balance, 10)*10**-8).toLocaleString()} BTC (
                                             <span style={{ color: lastTransactions[key].balance_update.includes('+') ? 'green' : 'red' }}>
                                             {parseFloat(lastTransactions[key].balance_update.replace('%', '')).toFixed(2) + '%'}
                                           </span> )
